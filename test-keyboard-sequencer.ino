@@ -1,5 +1,4 @@
-//int buttonPins[] = {0, 1, 2, 3, 4, 5, A0, A1};
-//int stepPins[] = {8, 9, 10, 11, 12, 13, 6, 7};
+// arduino 8 bit sequencer based on lookmumnocomputers design
 int buttonPins[] = {9, 10, 11, 12, 19, 5, 6, 7}; //input buttons
 int stepPins[] = {17, 16, 15, 14, 1, 2, 3, 4}; //output steps
 int forwardPin = 8;
@@ -9,7 +8,7 @@ int zeroPin = 13;
 
 int currentStep = 0;
 int direction = 0;
-int keyRelease = 1; // true
+int keyState = 0; // 0 = steady state (off/LOW), this is used to make sure we do not count 1 press as multiples by checking for release
 
 void setup() {
   // put your setup code here, to run once:
@@ -33,27 +32,27 @@ void loop() {
     }
   }
 
-  if (digitalRead(forwardPin) == HIGH && keyRelease == 1) {
-    if (currentStep == 7) {
-      currentStep = 0;
-    } else {
-      currentStep += 1;
+  if (keyState == 0) {
+    if (digitalRead(forwardPin) == HIGH) {
+      keyState = 1;
+      if (currentStep == 7) {
+        currentStep = 0;
+      } else {
+        currentStep += 1;
+      }
+    } else if (digitalRead(reversePin) == HIGH) {
+      keyState = 1;
+      if (currentStep == 0) {
+        currentStep = 7;
+      } else {
+        currentStep -= 1;
+      }
+    } 
+  } else if (digitalRead(forwardPin) == LOW && digitalRead(reversePin) == LOW && keyState == 1){
+    keyState = 0;
     }
-    keyRelease = 0;
-  } else if (digitalRead(forwardPin) == LOW && keyRelease == 0){
-    keyRelease = 1;
-  }
 
-  if (digitalRead(reversePin) == HIGH && keyRelease == 1) {
-    if (currentStep == 0) {
-      currentStep = 7;
-    } else {
-      currentStep -= 1;
-    }
-    keyRelease = 0;
-  } else if (digitalRead(reversePin) == LOW && keyRelease == 0){
-    keyRelease = 1;
-  }
+
 
   for (int i = 0; i < 8; i++) {
     

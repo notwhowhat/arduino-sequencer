@@ -1,4 +1,5 @@
 // arduino 8 bit sequencer based on lookmumnocomputers design
+// now with millis-ification to allow for some spify autoMode sequencing!
 int forwardSwiPin = 8; //sets direction forward
 int reverseSwiPin = 0; //sets direction reverse
 int resetSwiPin = 18; //resets unit sequence state at -1 (not visible)
@@ -11,7 +12,7 @@ bool reverseActive = false;
 bool resetActive = false;
 bool zeroActive = false;
 
-int currentStep = 0;
+int currentStep = 0; //which step is current 0 is not visible while 1-8 are shown with LEDs via stepPins
 int direction = 0; //direction sequence or step will go : 1 for forward, -1 for reverse, 0 for current step
 int directionNow = 1; //direction now chosen : 1 = forward, -1 = reverse
 int swiState = 0; // 0 = steady state (off/LOW), this is used to make sure we do not count 1 press as multiples by checking for release
@@ -23,10 +24,12 @@ int BPMnow = BPM;
 bool stepTriggered = false; //true if a step has been triggered but not yet solved
 bool autoMode = false; //if true then in sequence program mode where sequence will proceed at BPM
 int loopTriggerBPM = 0; //if 1 or above then loop in BPM setting has been triggered, 0 if not triggered
+bool tmpDigitalRead = false; // low = false high = true for tmp button
 
 //bool inZeroMode = false;
 //unsigned long sequenceStepTime = 0;
-unsigned long sequenceStepTimeStart = millis();
+unsigned long millisNow = millis();
+unsigned long sequenceStepTimeStart = millisNow;
 unsigned long sequenceStepTimeNext = sequenceStepTimeStart + 60/BPM*1000; //given current sequence time, this will provide the next moment when the sequence will move in direction given
 unsigned long swiPressTime = 0; //millis when pressed
 unsigned long swiHoldDuration = 0; // difference for comparision between times, eg = millis() - swiPressTime;
@@ -46,19 +49,19 @@ void setup() {
 }
 
 void loop() {
-  // keyboard button presses
+  // keyboard button press check
   for (int i = 0; i < 8; i++) {
-    tmp = digitalRead(keyboardBtnPins[i]);
-    if (tmp == HIGH) {
+    tmpDigitalRead = digitalRead(keyboardBtnPins[i]);
+    if (tmpDigitalRead == true) {
       currentStep = i;
       if (autoMode) {
         btnState[i] = 1;
         btnPressTime[i] = millis();
-      } 
+      }
     }
   }
 
-  // function switch presses
+  // function switch press check
   if (digitalRead(resetSwiPin) == HIGH) {
     resetActive = true;
   }
@@ -72,10 +75,11 @@ void loop() {
     reverseActive = true;
   }
 
+  millisNow = millis();
   if (resetActive || zeroActive || forwardActive || reverseActive ) {
     if (swiState == 0 ) {
       swiState = 1;
-      swiPressTime = millis();
+      swiPressTime = millisNow;
       
       if (swiPressTime == 0) {
         if (resetActive) {
@@ -90,19 +94,19 @@ void loop() {
         }
       } 
     } else if (swiState == 1 ) {
-      swiHoldDuration = millis() - swiPressTime;
+      swiHoldDuration = millisNow - swiPressTime;
       if (forwardActive || reverseActive) {
         if (!autoMode ) { 
           if (swiHoldDuration >= 1000) {
             autoMode = true;
             direction = directionNow;
-            sequenceStepTimeStart = millis();
+            sequenceStepTimeStart = millisNow;
             sequenceStepTimeNext = sequenceStepTimeStart + 60/BPM*1000;
             //need to setup a lock so it does not influence BPM unil next keypress
           } else if (!stepTriggered) { //triggers the step 1x each time the switch is pressed
             stepTriggered=true; 
           }
-        } else if (automode ) { // automode
+        } else if (autoMode ) { // automode
           if (swiHoldDuration < 1000 && loopTriggerBPM == 0 ) {
             //change BPM by 1 in direction
             BPM = BPM += directionNow;
@@ -115,31 +119,37 @@ void loop() {
           }
         }
       }
-  } else if (swiState == 1 && (resetActive && zeroActive && forwardActive && reverseActive) ) {
-    swiHoldDuration = millis() - swiPressTime; 
-    swiState = 0;
-    loopTriggerBPM = 0;
+    } else if (swiState == 1 && (!resetActive && !zeroActive && !forwardActive && !reverseActive) ) { //clean up once nothing is active
+      // NOTE: could be an issue if two switches are actived at same time?
+      swiHoldDuration = millisNow - swiPressTime; 
+      swiState = 0;
+      loopTriggerBPM = 0;
+      stepTriggered = false;
+    }
   }
-
       
 
 
 
   // ouput assimilation
+  
+  //find next step if triggered via forward or reverse
+  if (stepTriggered == true) {
+    currentStep += direction;
+    if (currentStep > 7 ) {
+      currentStep = 0;
+    } else if (currentStep < 0 ) {
+      currentStep = 7;
+    }
+  }
+  /*
   // if momentary switch then
-  if (autoMode && millis() > sequenceStepTimeNext) { //if true then next step in automode has been surpassed
+  if (autoMode && millisNow > sequenceStepTimeNext) { //if true then next step in automode has been surpassed
     sequenceStepTimeStart = millis();
     sequenceStepTimeNext = sequenceStepTimeStart + 60/BPM*1000;
   }
-  //find next step
-  currentStep += direction;
-  if (currentStep > 7 ) {
-    currentStep = 0;
-  } else if (currentStep < 0 ) {
-    currentStep = 7;
-  }
-
-  /*} else if (!autoMode) {
+  
+  } else if (!autoMode) {
     if (direction == 1) {
       if (currentStep == 7) {
         currentStep = 0;
@@ -158,7 +168,7 @@ void loop() {
 
   //ouput given sequence steps
   for (int i = 0; i < 8; i++) {
-    if (currentStep == i || btnState[i]==1) {
+    if (currentStep == i || btnState[i] == 1 ) {
       digitalWrite(stepPins[i], HIGH);
     } else {
       digitalWrite(stepPins[i], LOW);

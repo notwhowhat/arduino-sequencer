@@ -1,0 +1,5 @@
+{
+    "board": "arduino:avr:uno",
+    "sketch": "test-keyboard-sequencer.ino",
+    "port": "COM5"
+}

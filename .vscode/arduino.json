@@ -1,7 +1,4 @@
 {
     "board": "arduino:avr:uno",
-    "port": "COM5",
-    "programmer": "avrisp",
-    "output": "../ArduinoOutput",
-    "sketch": "test-keyboard-sequencer.ino"
+    "port": "COM5"
 }

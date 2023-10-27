@@ -65,25 +65,16 @@ void loop() {
   }
 
   // function switch press check
-  if (digitalRead(resetSwiPin) == HIGH) {
-    resetActive = true;
-  }
-  if (digitalRead(zeroSwiPin) == HIGH) {
-    zeroActive = true;
-  }
-  if (digitalRead(forwardSwiPin) == HIGH) {
-    forwardActive = true;
-  }
-  if (digitalRead(reverseSwiPin) == HIGH) {
-    reverseActive = true;
-  }
+  
+  resetActive = digitalRead(resetSwiPin);
+  zeroActive = digitalRead(zeroSwiPin);
+  forwardActive = digitalRead(forwardSwiPin);
+  reverseActive = digitalRead(reverseSwiPin);
 
   millisNow = millis();
   if (resetActive || zeroActive || forwardActive || reverseActive ) {
     if (swiState == 0 ) {
       swiState = 1;
-      swiPressTime = millisNow;
-      
       if (swiPressTime == 0) {
         if (resetActive) {
           currentStep = -1;
@@ -98,19 +89,21 @@ void loop() {
           currentStep = 0;
         } else if (forwardActive) {
           directionNow = 1;
-          stepTriggered=true; 
+          stepTriggered=true;
         } else if (reverseActive) {
           directionNow = -1;
-          stepTriggered=true; 
+          stepTriggered=true;
         }
+        swiPressTime = millisNow;
       } 
-    } else if (swiState == 1 ) {
+    } 
+    if (swiState == 1 ) {
       swiHoldDuration = millisNow - swiPressTime;
       if (forwardActive || reverseActive) {
         if (!autoMode ) { 
+          direction = directionNow;
           if (swiHoldDuration >= 1000) {
             autoMode = true;
-            direction = directionNow;
             sequenceStepTimeStart = millisNow;
             sequenceStepTimeNext = sequenceStepTimeStart + 60/BPM*1000;
             loopTriggerBPM = -1; //-1 to lock the BPM value so it does not influence BPM unil next keypress
@@ -133,11 +126,10 @@ void loop() {
     // NOTE: could be an issue if two switches are actived at same time?
     swiHoldDuration = millisNow - swiPressTime; 
     swiState = 0;
+    swiPressTime = 0;
     loopTriggerBPM = 0;
-  }   
-
-
-
+  }
+  
   // ouput assimilation
   // automode
   if (autoMode && millisNow > sequenceStepTimeNext) { //if true then next step in automode has been surpassed

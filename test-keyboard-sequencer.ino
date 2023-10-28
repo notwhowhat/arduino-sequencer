@@ -17,6 +17,7 @@ int direction = 0; //direction sequence or step will go : 1 for forward, -1 for 
 int directionNow = 1; //direction now chosen : 1 = forward, -1 = reverse
 int swiState = 0; // 0 = steady state (off/LOW), this is used to make sure we do not count 1 press as multiples by checking for release
 int btnState[] = {0,0,0,0,0,0,0,0};
+int autoArpeggiator[8];
 
 //define variables (for BPM and millis)
 int BPM = 60;
@@ -111,20 +112,15 @@ void loop() {
         } else if (autoMode ) { // automode
           if (swiHoldDuration < 1000 && loopTriggerBPM == 0 ) {
             //change BPM by 1 in direction
-            //BPM = BPM += directionNow;
             if (direction == directionNow) {
-              //BPM += directionNow;
               BPM += 1;
             } else {
               BPM -= 1;
             }
-            
-            loopTriggerBPM = 1;
+            //loopTriggerBPM = 1; //this makes it go forward in auto mode .. removed now as was anoying to test.
           } else if (loopTriggerBPM > 0 && swiHoldDuration >= 1000 + (loopTriggerBPM -1 ) * 200 ) {
             //change BPM based on time held ~5 for every 1 second
-            // BPM = BPMnow + dir * direction * ((buttonHoldTime-1000)/500);
             if (direction == directionNow) {
-              //BPM += directionNow;
               BPM += 1;
             } else {
               BPM -= 1;

@@ -22,7 +22,7 @@ int autoBtnMode = 1;
 
 //define variables (for BPM and millis)
 int BPM = 60;
-int BPMnow = BPM;
+//int BPMnow = BPM;
 bool stepTriggered = false; //true if a step has been triggered but not yet solved
 bool autoMode = false; //if true then in sequence program mode where sequence will proceed at BPM
 int loopTriggerBPM = 0; //if 1 or above then loop in BPM setting has been triggered, 0 if not triggered
@@ -101,6 +101,12 @@ void loop() {
     } 
     if (swiState == 1 ) {
       swiHoldDuration = millisNow - swiPressTime;
+      if (zeroActive) {
+        if (swiHoldDuration >= 2000) {
+          if (autoBtnMode == 1) { autoBtnMode = 2;}
+          if (autoBtnMode == 2) { autoBtnMode = 1;}      
+        }
+      }
       if (forwardActive || reverseActive) {
         if (!autoMode ) { 
           direction = directionNow;
@@ -143,9 +149,11 @@ void loop() {
   // ouput assimilation
   // automode
   if (autoMode && millisNow > sequenceStepTimeNext) { //if true then next step in automode has been surpassed so lets trigger a step
-    sequenceStepTimeStart = millis();
-    sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;//60/BPM*1000;
-    stepTriggered = true;
+    if(autoBtnMode <= 1 ) { //modes that follow BPM
+      sequenceStepTimeStart = millis();
+      sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;//60/BPM*1000;
+      stepTriggered = true;
+    }
   }
 
   //find next step if triggered via forward or reverse or via auotmode

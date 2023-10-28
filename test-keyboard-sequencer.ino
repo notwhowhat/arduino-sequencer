@@ -18,13 +18,13 @@ int directionNow = 1; //direction now chosen : 1 = forward, -1 = reverse
 int swiState = 0; // 0 = steady state (off/LOW), this is used to make sure we do not count 1 press as multiples by checking for release
 int btnState[] = {0,0,0,0,0,0,0,0};
 int autoArpeggiator[8];
-int autoBtnMode = 1;
+int autoBtnMode = 1; //1 = excluding buttons/steps @BPM, 2 = record mode order of presses, holds and spaces, 3 = record mode order of presses @BPM
 
 //define variables (for BPM and millis)
 int BPM = 60;
 //int BPMnow = BPM;
 bool stepTriggered = false; //true if a step has been triggered but not yet solved
-bool autoMode = false; //if true then in sequence program mode where sequence will proceed at BPM
+bool autoMode = false; //if true then in sequence program mode where sequence will proceed at BPM or according to autoBtnMode
 int loopTriggerBPM = 0; //if 1 or above then loop in BPM setting has been triggered, 0 if not triggered
 bool tmpDigitalRead = false; // low = false high = true for tmp button
 

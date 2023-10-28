@@ -18,7 +18,7 @@ int directionNow = 1; //direction now chosen : 1 = forward, -1 = reverse
 int swiState = 0; // 0 = steady state (off/LOW), this is used to make sure we do not count 1 press as multiples by checking for release
 int btnState[] = {0,0,0,0,0,0,0,0};
 int autoArpeggiator[8];
-int autoBtnMode = 1; //1 = excluding buttons/steps @BPM, 2 = record mode order of presses, holds and spaces, 3 = record mode order of presses @BPM
+int autoBtnMode = 1; //1 = excluding buttons/steps @BPM, 1 = output record mode order of presses @BPM, 2 = ouput record mode order of presses, holds and spaces
 
 //define variables (for BPM and millis)
 int BPM = 60;

@@ -17,9 +17,10 @@ int direction = 0; //direction sequence or step will go : 1 for forward, -1 for 
 int directionNow = 1; //direction now chosen : 1 = forward, -1 = reverse
 int swiState = 0; // 0 = steady state (off/LOW), this is used to make sure we do not count 1 press as multiples by checking for release
 int btnState[] = {0,0,0,0,0,0,0,0};
+int autoArpeggiator[8];
 
 //define variables (for BPM and millis)
-int BPM = 120;
+int BPM = 60;
 int BPMnow = BPM;
 bool stepTriggered = false; //true if a step has been triggered but not yet solved
 bool autoMode = false; //if true then in sequence program mode where sequence will proceed at BPM
@@ -105,18 +106,26 @@ void loop() {
           if (swiHoldDuration >= 1000) {
             autoMode = true;
             sequenceStepTimeStart = millisNow;
-            sequenceStepTimeNext = sequenceStepTimeStart + 60/BPM*1000;
-            loopTriggerBPM = -1; //-1 to lock the BPM value so it does not influence BPM unil next keypress
+            sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;//*1000;
+            loopTriggerBPM = -1; //-1 to lock the BPM value so it does not influence BPM unil next switchpress
           }
         } else if (autoMode ) { // automode
           if (swiHoldDuration < 1000 && loopTriggerBPM == 0 ) {
             //change BPM by 1 in direction
-            BPM = BPM += directionNow;
-            loopTriggerBPM = 1;
-          } else if (loopTriggerBPM != -1 && swiHoldDuration >= 1000 + (loopTriggerBPM -1 ) * 200 ) {
+            if (direction == directionNow) {
+              BPM += 1;
+            } else {
+              BPM -= 1;
+            }
+            //loopTriggerBPM = 1; //this makes it go forward in auto mode .. removed now as was anoying to test.
+          } else if (loopTriggerBPM > 0 && swiHoldDuration >= 1000 + (loopTriggerBPM -1 ) * 200 ) {
             //change BPM based on time held ~5 for every 1 second
-            // BPM = BPMnow + dir * direction * ((buttonHoldTime-1000)/500);
-            BPM += directionNow;
+            if (direction == directionNow) {
+              BPM += 1;
+            } else {
+              BPM -= 1;
+            }
+            
             loopTriggerBPM += 1;
           }
         }
@@ -124,7 +133,7 @@ void loop() {
     }
   } else if (swiState == 1 && (!resetActive && !zeroActive && !forwardActive && !reverseActive) ) { //clean up once nothing is active
     // NOTE: could be an issue if two switches are actived at same time?
-    swiHoldDuration = millisNow - swiPressTime; 
+    swiHoldDuration = 0; //millisNow - swiPressTime; 
     swiState = 0;
     swiPressTime = 0;
     loopTriggerBPM = 0;
@@ -132,9 +141,9 @@ void loop() {
   
   // ouput assimilation
   // automode
-  if (autoMode && millisNow > sequenceStepTimeNext) { //if true then next step in automode has been surpassed
+  if (autoMode && millisNow > sequenceStepTimeNext) { //if true then next step in automode has been surpassed so lets trigger a step
     sequenceStepTimeStart = millis();
-    sequenceStepTimeNext = sequenceStepTimeStart + 60/BPM*1000;
+    sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;//60/BPM*1000;
     stepTriggered = true;
   }
 

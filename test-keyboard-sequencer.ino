@@ -21,17 +21,6 @@ int autoArpeggiator[8];
 int autoBtnMode = 0; //0 = excluding buttons/steps @BPM, 1 = output record mode order of presses @BPM, 2 = ouput record mode order of presses, holds and spaces
 int autoRecordingStep = 0; // in autoBtnMode 1 or 2 used to track which step we are at for output.
 
-bool countdown = true;
-unsigned long countdownTime = millis();
-
-// for recording the notes. 64 steps max len
-int autoRec[64];
-unsigned long autoRecBtnTimeStart[64];
-unsigned long autoRecDuration[64];
-
-
-
-
 //define variables (for BPM and millis)
 int BPM = 60;
 //int BPMnow = BPM;
@@ -60,17 +49,6 @@ void setup() {
   pinMode(reverseSwiPin, INPUT);
   pinMode(resetSwiPin, INPUT);
   pinMode(zeroSwiPin, INPUT);
-}
-
-void outputPins(int currentStep, int[] btnState) {
-  //ouput given sequence steps
-  for (int i = 0; i < 8; i++) {
-    if (currentStep == i || btnState[i] == 1 ) {
-      digitalWrite(stepPins[i], HIGH);
-    } else {
-      digitalWrite(stepPins[i], LOW);
-    }
-  }
 }
 
 void loop() {
@@ -140,48 +118,6 @@ void loop() {
             loopTriggerBPM = -1; //-1 to lock the BPM value so it does not influence BPM unil next switchpress
           }
         } else if (autoMode ) { // automode
-          int buttonPresses = 0;
-          for (int i; i < 8; i++) {
-            if (btnPressTime >= 5) {
-              // now it is time to do something with the buttons
-              buttonPresses++;
-            }        
-          }
-
-          if (buttonPresses > 1) {
-            // more than one buttons are pressed, so button mode 2 time
-            autoBtnMode = 2;
-            countdown = true;
-            countdownTime = millis();
-          } else {
-            autoBtnMode = 1;
-          }
-
-          if (autoBtnMode == 2) {
-            // first do countdown
-            if (countdown) {
-              if (countdownTime + (60000 / BPM * 6) > millis()) {
-              // start flashing
-              for (int i = 0; i < 3; i++) {
-                for (int j = 0; j < 8; j++) {
-                  digitalWrite(stepPins[j], HIGH)                  
-                }
-                delay((60000 / BPM)) // one beat
-                for (int j = 0; j < 8; j++) {
-                  digitalWrite(stepPins[j], LOW)                  
-                }                
-                delay((60000 / BPM)) // one beat         
-              }
-              countdown = false;
-            }
-
-            outputPins(0, btnState);
-
-            
-          }          
-
-
-        
           if (swiHoldDuration < 1000 && loopTriggerBPM == 0 ) {
             //change BPM by 1 in direction
             if (direction == directionNow) {
@@ -265,13 +201,12 @@ void loop() {
   */
   
   //ouput given sequence steps
-  //for (int i = 0; i < 8; i++) {
-  //  if (currentStep == i || btnState[i] == 1 ) {
-  //    digitalWrite(stepPins[i], HIGH);
-  //  } else {
-  //    digitalWrite(stepPins[i], LOW);
-  //  }
-  //}
+  for (int i = 0; i < 8; i++) {
+    if (currentStep == i || btnState[i] == 1 ) {
+      digitalWrite(stepPins[i], HIGH);
+    } else {
+      digitalWrite(stepPins[i], LOW);
+    }
+  }
   
-  outputPins(currentStep, btnState);
 }

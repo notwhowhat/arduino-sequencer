@@ -19,16 +19,18 @@ int swiState = 0; // 0 = steady state (off/LOW), this is used to make sure we do
 int btnState[] = {0,0,0,0,0,0,0,0};
 int autoArpeggiator[8];
 int autoBtnMode = 0; //0 = excluding buttons/steps @BPM, 1 = output record mode order of presses @BPM, 2 = ouput record mode order of presses, holds and spaces
-int autoNextRecStep = 0; // in autoBtnMode 1 or 2 used to track which step we are at for output.
+int autoRecordingStep = 0; // in autoBtnMode 1 or 2 used to track which step we are at for output.
 
 bool countdown = true;
 unsigned long countdownTime = millis();
 
 // for recording the notes. 64 steps max len
-bool autoRecStart = false;
 int autoRec[64];
 unsigned long autoRecBtnTimeStart[64];
 unsigned long autoRecDuration[64];
+
+
+
 
 //define variables (for BPM and millis)
 int BPM = 60;
@@ -171,33 +173,11 @@ void loop() {
                 delay((60000 / BPM)) // one beat         
               }
               countdown = false;
-              autoRecStart = true;
             }
-            if (autoRecStart) {                   
-              while (autoRecBtnTimeStart[autoNextRecStep - 1] + autoRecDuration[autoNextRecStep - 1] + 5000 < millis()) { // set to check if last note was 5 seconds ago
-                for (int i = 0; i < 8; i++) {
-                  tmpDigitalRead = digitalRead(keyboardBtnPins[i]);
 
-                  if (tmpDigitalRead == true) {
-                    if (btnState[i] == false) {
-                      // was false last cycle and true now, so new note and new values
-                      btnState[i] = 1;
-                      btnPressTime[i] = millis(); 
-                    }                              
-                  } else {
-                    if (btnState[i] = true) {
-                      // opposite of last check, so the note has finnished between now and last cycle
-                      autoRec[autoNextRecStep] = autoNextRecStep;
-                      autoRecBtnTimeStart[autoNextRecStep] = btnPressTime[i]; // the start of the press was recorded before
-                      autoRecDuration[autoNextRecStep] = btnPressTime[i] - millis(); // time gap
-                      autoNextRecStep++;
-                    }
-                  }
-                }
-              }
-              autoRecStart = false;
-            }
             outputPins(0, btnState);
+
+            
           }          
 
 

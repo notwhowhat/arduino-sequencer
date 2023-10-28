@@ -18,11 +18,21 @@ int directionNow = 1; //direction now chosen : 1 = forward, -1 = reverse
 int swiState = 0; // 0 = steady state (off/LOW), this is used to make sure we do not count 1 press as multiples by checking for release
 int btnState[] = {0,0,0,0,0,0,0,0};
 int autoArpeggiator[8];
-int autoBtnMode = 1; //1 = excluding buttons/steps @BPM, 2 = record mode order of presses, holds and spaces, 3 = record mode order of presses @BPM
+int autoBtnMode = 0; //0 = excluding buttons/steps @BPM, 1 = output record mode order of presses @BPM, 2 = ouput record mode order of presses, holds and spaces
+int autoNextRecStep = 0; // in autoBtnMode 1 or 2 used to track which step we are at for output.
+
+bool countdown = true;
+unsigned long countdownTime = millis();
+
+// for recording the notes. 64 steps max len
+bool autoRecStart = false;
+int autoRec[64];
+unsigned long autoRecBtnTimeStart[64];
+unsigned long autoRecDuration[64];
 
 //define variables (for BPM and millis)
 int BPM = 60;
-int BPMnow = BPM;
+//int BPMnow = BPM;
 bool stepTriggered = false; //true if a step has been triggered but not yet solved
 bool autoMode = false; //if true then in sequence program mode where sequence will proceed at BPM or according to autoBtnMode
 int loopTriggerBPM = 0; //if 1 or above then loop in BPM setting has been triggered, 0 if not triggered
@@ -48,6 +58,17 @@ void setup() {
   pinMode(reverseSwiPin, INPUT);
   pinMode(resetSwiPin, INPUT);
   pinMode(zeroSwiPin, INPUT);
+}
+
+void outputPins(int currentStep, int[] btnState) {
+  //ouput given sequence steps
+  for (int i = 0; i < 8; i++) {
+    if (currentStep == i || btnState[i] == 1 ) {
+      digitalWrite(stepPins[i], HIGH);
+    } else {
+      digitalWrite(stepPins[i], LOW);
+    }
+  }
 }
 
 void loop() {
@@ -101,6 +122,12 @@ void loop() {
     } 
     if (swiState == 1 ) {
       swiHoldDuration = millisNow - swiPressTime;
+      if (zeroActive) {
+        if (swiHoldDuration >= 2000) {
+          if (autoBtnMode == 1) { autoBtnMode = 2;}
+          if (autoBtnMode == 2) { autoBtnMode = 1;}      
+        }
+      }
       if (forwardActive || reverseActive) {
         if (!autoMode ) { 
           direction = directionNow;
@@ -111,6 +138,70 @@ void loop() {
             loopTriggerBPM = -1; //-1 to lock the BPM value so it does not influence BPM unil next switchpress
           }
         } else if (autoMode ) { // automode
+          int buttonPresses = 0;
+          for (int i; i < 8; i++) {
+            if (btnPressTime >= 5) {
+              // now it is time to do something with the buttons
+              buttonPresses++;
+            }        
+          }
+
+          if (buttonPresses > 1) {
+            // more than one buttons are pressed, so button mode 2 time
+            autoBtnMode = 2;
+            countdown = true;
+            countdownTime = millis();
+          } else {
+            autoBtnMode = 1;
+          }
+
+          if (autoBtnMode == 2) {
+            // first do countdown
+            if (countdown) {
+              if (countdownTime + (60000 / BPM * 6) > millis()) {
+              // start flashing
+              for (int i = 0; i < 3; i++) {
+                for (int j = 0; j < 8; j++) {
+                  digitalWrite(stepPins[j], HIGH)                  
+                }
+                delay((60000 / BPM)) // one beat
+                for (int j = 0; j < 8; j++) {
+                  digitalWrite(stepPins[j], LOW)                  
+                }                
+                delay((60000 / BPM)) // one beat         
+              }
+              countdown = false;
+              autoRecStart = true;
+            }
+            if (autoRecStart) {                   
+              while (autoRecBtnTimeStart[autoNextRecStep - 1] + autoRecDuration[autoNextRecStep - 1] + 5000 < millis()) { // set to check if last note was 5 seconds ago
+                for (int i = 0; i < 8; i++) {
+                  tmpDigitalRead = digitalRead(keyboardBtnPins[i]);
+
+                  if (tmpDigitalRead == true) {
+                    if (btnState[i] == false) {
+                      // was false last cycle and true now, so new note and new values
+                      btnState[i] = 1;
+                      btnPressTime[i] = millis(); 
+                    }                              
+                  } else {
+                    if (btnState[i] = true) {
+                      // opposite of last check, so the note has finnished between now and last cycle
+                      autoRec[autoNextRecStep] = autoNextRecStep;
+                      autoRecBtnTimeStart[autoNextRecStep] = btnPressTime[i]; // the start of the press was recorded before
+                      autoRecDuration[autoNextRecStep] = btnPressTime[i] - millis(); // time gap
+                      autoNextRecStep++;
+                    }
+                  }
+                }
+              }
+              autoRecStart = false;
+            }
+            outputPins(0, btnState);
+          }          
+
+
+        
           if (swiHoldDuration < 1000 && loopTriggerBPM == 0 ) {
             //change BPM by 1 in direction
             if (direction == directionNow) {
@@ -144,8 +235,20 @@ void loop() {
   // automode
   if (autoMode && millisNow > sequenceStepTimeNext) { //if true then next step in automode has been surpassed so lets trigger a step
     sequenceStepTimeStart = millis();
-    sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;//60/BPM*1000;
-    stepTriggered = true;
+    if(autoBtnMode <= 1 ) { //modes that follow BPM
+      sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;//60/BPM*1000;
+      stepTriggered = true;
+    } else if (autoBtnMode == 2) { //mode that follows recorded input
+      //here it will need to follow the lists provided to know when to start 
+      sequenceStepTimeStart = millis();
+      sequenceStepTimeNext = sequenceStepTimeStart + btnPressTime[autoRecordingStep]; 
+      autoRecordingStep +=1;
+      //check if autoRecordingStep is above number of steps if so then startover.
+      //!!! need to fix output, clear all ouput
+      //clear all output except output button
+      //then
+      //~~~~>?? currentStep = autoRecordingBtn[autoRecordingStep];
+    }
   }
 
   //find next step if triggered via forward or reverse or via auotmode
@@ -182,12 +285,13 @@ void loop() {
   */
   
   //ouput given sequence steps
-  for (int i = 0; i < 8; i++) {
-    if (currentStep == i || btnState[i] == 1 ) {
-      digitalWrite(stepPins[i], HIGH);
-    } else {
-      digitalWrite(stepPins[i], LOW);
-    }
-  }
+  //for (int i = 0; i < 8; i++) {
+  //  if (currentStep == i || btnState[i] == 1 ) {
+  //    digitalWrite(stepPins[i], HIGH);
+  //  } else {
+  //    digitalWrite(stepPins[i], LOW);
+  //  }
+  //}
   
+  outputPins(currentStep, btnState);
 }

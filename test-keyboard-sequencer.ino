@@ -60,7 +60,7 @@ void setup() {
   pinMode(zeroSwiPin, INPUT);
 }
 
-void outputPins(int currentStep, int btnState[]) {
+void outputPins(int currentStep, int btnState[] ) {
   //ouput given sequence steps
   for (int i = 0; i < 8; i++) {
     if (currentStep == i || btnState[i] == 1 ) {
@@ -87,7 +87,7 @@ void loop() {
     }
   }
 
-  if (autoMode) { // automode
+  if (autoMode ) { // automode
     int buttonPresses = 0;
     for (int i; i < 8; i++) {
       if (btnPressTime[i] >= 5000) {
@@ -96,6 +96,14 @@ void loop() {
       }        
     }
 
+    if (buttonPresses > 1) {
+      // more than one buttons are pressed, so button mode 2 time
+      autoBtnMode = 2;
+      countdown = true;
+      countdownTime = millis();
+    } else {
+      autoBtnMode = 1;
+    }
     if (buttonPresses > 1) {
       // more than one buttons are pressed, so button mode 2 time
       autoBtnMode = 2;
@@ -122,25 +130,25 @@ void loop() {
         }
         countdown = false;
         autoRecStart = true;
-      }
-      if (autoRecStart) {                   
-        while (autoRecBtnTimeStart[autoNextRecStep - 1] + autoRecDuration[autoNextRecStep - 1] + 5000 < millis()) { // set to check if last note was 5 seconds ago
-          for (int i = 0; i < 8; i++) {
-            tmpDigitalRead = digitalRead(keyboardBtnPins[i]);
+        }
+        if (autoRecStart) {                   
+          while (autoRecBtnTimeStart[autoNextRecStep - 1] + autoRecDuration[autoNextRecStep - 1] + 5000 < millis()) { // set to check if last note was 5 seconds ago
+            for (int i = 0; i < 8; i++) {
+              tmpDigitalRead = digitalRead(keyboardBtnPins[i]);
 
-            if (tmpDigitalRead == true) {
-              if (btnState[i] == false) {
-                // was false last cycle and true now, so new note and new values
-                btnState[i] = 1;
-                btnPressTime[i] = millis(); 
-              }                              
-            } else {
-              if (btnState[i] = true) {
-                // opposite of last check, so the note has finnished between now and last cycle
-                autoRec[autoNextRecStep] = autoNextRecStep;
-                autoRecBtnTimeStart[autoNextRecStep] = btnPressTime[i]; // the start of the press was recorded before
-                autoRecDuration[autoNextRecStep] = btnPressTime[i] - millis(); // time gap
-                autoNextRecStep++;
+              if (tmpDigitalRead == true) {
+                if (btnState[i] == false) {
+                  // was false last cycle and true now, so new note and new values
+                  btnState[i] = 1;
+                  btnPressTime[i] = millis(); 
+                }
+              } else {
+                if (btnState[i] = true) {
+                  // opposite of last check, so the note has finnished between now and last cycle
+                  autoRec[autoNextRecStep] = autoNextRecStep;
+                  autoRecBtnTimeStart[autoNextRecStep] = btnPressTime[i]; // the start of the press was recorded before
+                  autoRecDuration[autoNextRecStep] = btnPressTime[i] - millis(); // time gap
+                  autoNextRecStep++;
               }
             }
           }
@@ -149,7 +157,7 @@ void loop() {
       autoRecStart = false;
     }
     outputPins(0, btnState);
-  }          
+  }
 
   // function switch press check
   
@@ -243,11 +251,11 @@ void loop() {
       sequenceStepTimeStart = millis();
       sequenceStepTimeNext = sequenceStepTimeStart + btnPressTime[autoNextRecStep]; 
       autoNextRecStep +=1;
-      //check if autoRecordingStep is above number of steps if so then startover.
+      //check if autoNextRecStep is above number of steps if so then startover.
       //!!! need to fix output, clear all ouput
       //clear all output except output button
       //then
-      //~~~~>?? currentStep = autoRecordingBtn[autoRecordingStep];
+      //~~~~>?? currentStep = autoRecordingBtn[autoNextRecStep];
     }
   }
 

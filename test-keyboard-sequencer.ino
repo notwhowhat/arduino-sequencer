@@ -64,6 +64,9 @@ void loop() {
     } else if (tmpDigitalRead == false) {
       btnState[i] = 0;
       btnPressTime[i] = 0;
+      if (!autoMode) {
+        currentStep = -1;
+      }
     }
   }
 

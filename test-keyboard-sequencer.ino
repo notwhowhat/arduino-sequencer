@@ -133,33 +133,36 @@ void loop() {
           // first do countdown
           if (countdownTrigger) {
             if (countdown()) {
+              // the countdown has sucessfully been finnished
               countdownTrigger = false;
 
               // next: time to record
               // this needs to have all elements of the buttons but also only gets to be run once
               while (autoRecBtnTimeStart[autoNextRecStep - 1] + autoRecDuration[autoNextRecStep - 1] + 5000 < millis()) { // set to check if last note was 5 seconds ago
-                for (int i = 0; i < 8; i++) {
+                // loops through all of the buttons for to check if they have been pressed
+                for (int k = 0; k < 8; k++) {
                   tmpDigitalRead = digitalRead(keyboardBtnPins[i]);
                   if (tmpDigitalRead == true) {
-                    if (btnState[i] == false) {
+                    if (btnState[k] == false) {
                       // was false last cycle and true now, so new note and new values
-                      btnState[i] = 1;
-                      btnPressTime[i] = millis(); 
+                      btnState[k] = 1;
+                      btnPressTime[k] = millis(); 
                     }
                   } else {
-                    if (btnState[i] = true) {
+                    if (btnState[k] = true) {
                       // opposite of last check, so the note has finnished between now and last cycle
                       autoRec[autoNextRecStep] = autoNextRecStep;
-                      autoRecBtnTimeStart[autoNextRecStep] = btnPressTime[i]; // the start of the press was recorded before
-                      autoRecDuration[autoNextRecStep] = btnPressTime[i] - millis(); // time gap
+                      autoRecBtnTimeStart[autoNextRecStep] = btnPressTime[k]; // the start of the press was recorded before
+                      autoRecDuration[autoNextRecStep] = btnPressTime[k] - millis(); // time gap
                       autoNextRecStep++;
                     }
                   }
                 }
                 // show all of the pressed buttons
-                outputPins(0, btnState);
+                //outputPins(0, btnState);
               }
               // marker: the countdown and recording ends here
+              countdown();
             }
           }
           autoRecStart = false;

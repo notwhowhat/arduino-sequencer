@@ -21,7 +21,7 @@ int autoArpeggiator[8];
 int autoBtnMode = 0; //0 = excluding buttons/steps @BPM, 1 = output record mode order of presses @BPM, 2 = ouput record mode order of presses, holds and spaces
 int autoNextRecStep = 0; // in autoBtnMode 1 or 2 used to track which step we are at for output.
 
-bool countdown = true;
+bool countdownTrigger = true;
 unsigned long countdownTime = millis();
 
 // for recording the notes. 64 steps max len
@@ -71,92 +71,88 @@ void outputPins(int currentStep, int btnState[] ) {
   }
 }
 
+bool countdown(void) {
+  if (countdownTime + (60000 / BPM * 6) > millis()) {
+    // start flashing
+    for (int j = 0; j < 8; j++) {
+      digitalWrite(stepPins[j], HIGH);                  
+    }
+    delay((60000 / BPM)); // one beat
+    for (int j = 0; j < 8; j++) {
+      digitalWrite(stepPins[j], LOW);                  
+    }                
+    delay((60000 / BPM)); // one beat         
+    // show that it has been sucsessfully done
+    return true;
+  }
+  return false;
+}
+
 void loop() {
   // keyboard button press check
+  int buttonPresses = 0;
   for (int i = 0; i < 8; i++) {
     tmpDigitalRead = digitalRead(keyboardBtnPins[i]);
     if (tmpDigitalRead == true) {
       currentStep = i;
+
       if (autoMode) {
         btnState[i] = 1;
         btnPressTime[i] = millis();
+
+        if (btnPressTime[i] >= 5000) {
+          // now it is time to do something with the buttons
+          buttonPresses += 1;
+        }
+
+        if (buttonPresses > 1) {
+          // more than one buttons are pressed, so button mode 2 time
+          autoBtnMode = 2;
+          countdownTrigger = true;
+          countdownTime = millis();
+        } else {
+          autoBtnMode = 1;
+        }
+
+        if (autoBtnMode == 2) {
+          // first do countdown
+          if (countdownTrigger) {
+            if (countdown()) {
+              countdownTrigger = false;
+
+              // next: time to record
+              // this needs to have all elements of the buttons but also only gets to be run once
+              while (autoRecBtnTimeStart[autoNextRecStep - 1] + autoRecDuration[autoNextRecStep - 1] + 5000 < millis()) { // set to check if last note was 5 seconds ago
+                for (int i = 0; i < 8; i++) {
+                  if (tmpDigitalRead == true) {
+                    if (btnState[i] == false) {
+                      // was false last cycle and true now, so new note and new values
+                      btnState[i] = 1;
+                      btnPressTime[i] = millis(); 
+                    }
+                  } else {
+                    if (btnState[i] = true) {
+                      // opposite of last check, so the note has finnished between now and last cycle
+                      autoRec[autoNextRecStep] = autoNextRecStep;
+                      autoRecBtnTimeStart[autoNextRecStep] = btnPressTime[i]; // the start of the press was recorded before
+                      autoRecDuration[autoNextRecStep] = btnPressTime[i] - millis(); // time gap
+                      autoNextRecStep++;
+                    }
+                  }
+                }
+                // show all of the pressed buttons
+                outputPins(0, btnState);
+              }
+              // marker: the countdown and recording ends here
+            }
+          }
+          autoRecStart = false;
+        }
       }
     } else if (tmpDigitalRead == false) {
       btnState[i] = 0;
       btnPressTime[i] = 0;
     }
-  }
-
-  if (autoMode ) { // automode
-    int buttonPresses = 0;
-    for (int i; i < 8; i++) {
-      if (btnPressTime[i] >= 5000) {
-        // now it is time to do something with the buttons
-        buttonPresses++;
-      }        
-    }
-
-    if (buttonPresses > 1) {
-      // more than one buttons are pressed, so button mode 2 time
-      autoBtnMode = 2;
-      countdown = true;
-      countdownTime = millis();
-    } else {
-      autoBtnMode = 1;
-    }
-    if (buttonPresses > 1) {
-      // more than one buttons are pressed, so button mode 2 time
-      autoBtnMode = 2;
-      countdown = true;
-      countdownTime = millis();
-    } else {
-      autoBtnMode = 1;
-    }
-
-    if (autoBtnMode == 2) {
-      // first do countdown
-      if (countdown) {
-        if (countdownTime + (60000 / BPM * 6) > millis()) {
-        // start flashing
-        for (int i = 0; i < 3; i++) {
-          for (int j = 0; j < 8; j++) {
-            digitalWrite(stepPins[j], HIGH);                  
-          }
-          delay((60000 / BPM)); // one beat
-          for (int j = 0; j < 8; j++) {
-            digitalWrite(stepPins[j], LOW);                  
-          }                
-          delay((60000 / BPM)); // one beat         
-        }
-        countdown = false;
-        autoRecStart = true;
-        }
-        if (autoRecStart) {                   
-          while (autoRecBtnTimeStart[autoNextRecStep - 1] + autoRecDuration[autoNextRecStep - 1] + 5000 < millis()) { // set to check if last note was 5 seconds ago
-            for (int i = 0; i < 8; i++) {
-              tmpDigitalRead = digitalRead(keyboardBtnPins[i]);
-
-              if (tmpDigitalRead == true) {
-                if (btnState[i] == false) {
-                  // was false last cycle and true now, so new note and new values
-                  btnState[i] = 1;
-                  btnPressTime[i] = millis(); 
-                }
-              } else {
-                if (btnState[i] = true) {
-                  // opposite of last check, so the note has finnished between now and last cycle
-                  autoRec[autoNextRecStep] = autoNextRecStep;
-                  autoRecBtnTimeStart[autoNextRecStep] = btnPressTime[i]; // the start of the press was recorded before
-                  autoRecDuration[autoNextRecStep] = btnPressTime[i] - millis(); // time gap
-                  autoNextRecStep++;
-              }
-            }
-          }
-        }
-      }
-      autoRecStart = false;
-    }
-    outputPins(0, btnState);
   }
 
   // function switch press check

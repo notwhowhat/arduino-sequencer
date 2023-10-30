@@ -72,6 +72,7 @@ void outputPins(int currentStep, int btnState[] ) {
 }
 
 bool countdown(void) {
+  /*
   if (countdownTime + (60000 / BPM * 6) > millis()) {
     // start flashing
     for (int j = 0; j < 8; j++) {
@@ -86,6 +87,20 @@ bool countdown(void) {
     return true;
   }
   return false;
+  */
+  for (int i = 0; i < 3; i++) {
+    // start flashing
+    for (int j = 0; j < 8; j++) {
+      digitalWrite(stepPins[j], HIGH);                  
+    }
+    delay((60000 / BPM)); // one beat
+    for (int j = 0; j < 8; j++) {
+      digitalWrite(stepPins[j], LOW);                  
+    }                
+    delay((60000 / BPM)); // one beat         
+  }
+  // show that it has been sucsessfully done
+  return true;
 }
 
 void loop() {
@@ -124,6 +139,7 @@ void loop() {
               // this needs to have all elements of the buttons but also only gets to be run once
               while (autoRecBtnTimeStart[autoNextRecStep - 1] + autoRecDuration[autoNextRecStep - 1] + 5000 < millis()) { // set to check if last note was 5 seconds ago
                 for (int i = 0; i < 8; i++) {
+                  tmpDigitalRead = digitalRead(keyboardBtnPins[i]);
                   if (tmpDigitalRead == true) {
                     if (btnState[i] == false) {
                       // was false last cycle and true now, so new note and new values

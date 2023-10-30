@@ -168,6 +168,9 @@ void loop() {
     } else if (tmpDigitalRead == false) {
       btnState[i] = 0;
       btnPressTime[i] = 0;
+      if (!autoMode) {
+        currentStep = -1;
+      }
     }
   }
 
@@ -221,7 +224,7 @@ void loop() {
             sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;//*1000;
             loopTriggerBPM = -1; //-1 to lock the BPM value so it does not influence BPM unil next switchpress
           }
-        } else if (autoMode) {
+        } else if (autoMode ) { // automode
           if (swiHoldDuration < 1000 && loopTriggerBPM == 0 ) {
             //change BPM by 1 in direction
             if (direction == directionNow) {
@@ -305,13 +308,12 @@ void loop() {
   */
   
   //ouput given sequence steps
-  //for (int i = 0; i < 8; i++) {
-  //  if (currentStep == i || btnState[i] == 1 ) {
-  //    digitalWrite(stepPins[i], HIGH);
-  //  } else {
-  //    digitalWrite(stepPins[i], LOW);
-  //  }
-  //}
+  for (int i = 0; i < 8; i++) {
+    if (currentStep == i || btnState[i] == 1 ) {
+      digitalWrite(stepPins[i], HIGH);
+    } else {
+      digitalWrite(stepPins[i], LOW);
+    }
+  }
   
-  outputPins(currentStep, btnState);
 }

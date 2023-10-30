@@ -168,7 +168,7 @@ void loop() {
               // was false last cycle and true now, so new note and new values
               btnState[k] = true;
               btnPressTime[k] = millisNow;
-            } else if (tmpDigitalRead == false && btnState[k] = true ) {
+            } else if (tmpDigitalRead == false && btnState[k] == true ) {
               // opposite of last check, so the note has finnished between now and last cycle
               autoRec[autoRecStep] = k;
 
@@ -176,7 +176,7 @@ void loop() {
               autoRecDuration[autoRecStep] = millisNow - autoRecBtnTimeStart[autoRecStep]; // duration of press
               autoRecStep++;
               btnState[k] = false;
-            } else if (tmpDigitalRead == false && btnState[k] = false ) {
+            } else if (tmpDigitalRead == false && btnState[k] ==) false ) {
               btnState[k] = false;
             }
           }

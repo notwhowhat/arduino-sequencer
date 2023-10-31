@@ -176,7 +176,7 @@ void loop() {
               autoRecDuration[autoRecStep] = millisNow - autoRecBtnTimeStart[autoRecStep]; // duration of press
               autoRecStep++;
               btnState[k] = false;
-            } else if (tmpDigitalRead == false && btnState[k] ==) false ) {
+            } else if (tmpDigitalRead == false && btnState[k] == false ) {
               btnState[k] = false;
             }
           }

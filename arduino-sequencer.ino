@@ -50,6 +50,8 @@ unsigned long swiHoldDuration = 0; // difference for comparision between times, 
 unsigned long btnPressTime[] = {0,0,0,0,0,0,0,0}; //millis when pressed
 unsigned long btnHoldDuration[] = {0,0,0,0,0,0,0,0}; // difference for comparision between times, eg = millis() - swiPressTime;
 
+bool runOnce = false;
+
 void setup() {
   // basic setup.
   for (int i = 0; i < 8; i++) {
@@ -72,6 +74,22 @@ void outputPins(int currentStep, bool btnState[] ) {
     }
   }
 }
+
+void startTest( ) {
+  //ouput given sequence steps
+ for (int j = 7; j >= -2; j--) { 
+  currentStep = j;
+  for (int i = 0; i < 8; i++) {
+      if (currentStep == i || currentStep == i-1 ) {
+        digitalWrite(stepPins[i], HIGH);
+      } else {
+        digitalWrite(stepPins[i], LOW);
+      }
+      delay(25);
+    }
+  }
+}
+
 
 bool countdown(void) {
   /*
@@ -107,12 +125,19 @@ bool countdown(void) {
 }
 
 void loop() {
+  if (!runOnce) {
+    startTest();
+    runOnce = true;
+  }
+
   // keyboard button press check
   int buttonPresses = 0; //number of button presses being pressed at the same time
+  int btnCntr = 0; // checking cnt to find current step
   for (int i = 0; i < 8; i++) {
     tmpDigitalRead = digitalRead(keyboardBtnPins[i]);
     if (tmpDigitalRead == true) {
       currentStep = i;
+      btnCntr ++;
       if (autoMode) {
         btnState[i] = true;
         autoRec[i] = i;
@@ -123,8 +148,8 @@ void loop() {
     } else if (tmpDigitalRead == false) {
       btnState[i] = false;
       btnPressTime[i] = 0;
-      if (!autoMode) {
-        currentStep = -1;
+      if (!autoMode && btnCntr == 0) {
+        //currentStep = -1;
       }
     }
   }

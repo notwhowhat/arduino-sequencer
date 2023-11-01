@@ -105,12 +105,14 @@ void loop() {
     } 
     if (swiState == 1 ) {
       swiHoldDuration = millisNow - swiPressTime;
+      /*
       if (zeroActive) {
         if (swiHoldDuration >= 2000) {
           if (autoBtnMode == 1) { autoBtnMode = 2;}
           if (autoBtnMode == 2) { autoBtnMode = 1;}      
         }
       }
+      */
       if (forwardActive || reverseActive) {
         if (!autoMode ) { 
           direction = directionNow;
@@ -155,6 +157,7 @@ void loop() {
   if (autoMode && millisNow > sequenceStepTimeNext) { //if true then next step in automode has been surpassed so lets trigger a step
     sequenceStepTimeStart = millis();
     if(autoBtnMode <= 1 ) { //modes that follow BPM
+      // tofix: this should be in the normal auto mode check aswell as the buttonmode check, but not only this one.
       sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;//60/BPM*1000;
       stepTriggered = true;
     } else if (autoBtnMode == 2) { //mode that follows recorded input
@@ -167,6 +170,10 @@ void loop() {
       //clear all output except output button
       //then
       //~~~~>?? currentStep = autoRecordingBtn[autoRecordingStep];
+    } else {
+      // normal basic autoMode
+      sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;//60/BPM*1000;
+      stepTriggered = true;
     }
   }
 

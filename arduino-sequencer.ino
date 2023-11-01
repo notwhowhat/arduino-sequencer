@@ -51,10 +51,12 @@ void setup() {
 
 void loop() {
   // keyboard button press check
+  int btnsPressed = 0;
   for (int i = 0; i < 8; i++) {
     tmpDigitalRead = digitalRead(keyboardBtnPins[i]);
     if (tmpDigitalRead == true) {
       currentStep = i;
+      btnsPressed++;
       if (autoMode) {
         btnState[i] = 1;
         btnPressTime[i] = millis();
@@ -64,6 +66,7 @@ void loop() {
       btnPressTime[i] = 0;
     }
   }
+  if (btnsPressed==0 && !autoMode){ currentStep =-1;}
 
   // function switch press check
   
@@ -90,10 +93,10 @@ void loop() {
           currentStep = 0;
         } else if (forwardActive) {
           directionNow = 1;
-          stepTriggered=true;
+          if (!autoMode) {stepTriggered=true;}
         } else if (reverseActive) {
           directionNow = -1;
-          stepTriggered=true;
+          if (!autoMode) {stepTriggered=true;}
         }
         swiPressTime = millisNow;
       } 
@@ -118,14 +121,13 @@ void loop() {
               BPM -= 1;
             }
             loopTriggerBPM = 1; //this makes it go forward in auto mode .. removed now as was anoying to test.
-          } else if (loopTriggerBPM > 0 && swiHoldDuration >= 1000 + (loopTriggerBPM -1 ) * 200 ) {
+          } else if (loopTriggerBPM > 0 && swiHoldDuration >= 1000 + (loopTriggerBPM -1 ) * 100 ) {
             //change BPM based on time held ~5 for every 1 second
             if (direction == directionNow) {
               BPM += 1;
             } else {
               BPM -= 1;
             }
-            
             loopTriggerBPM += 1;
           }
         }

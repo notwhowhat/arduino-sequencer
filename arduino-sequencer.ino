@@ -114,11 +114,11 @@ bool countdown(void) {
     for (int j = 0; j < 8; j++) {
       digitalWrite(stepPins[j], HIGH);                  
     }
-    delay((60*1000 / BPM)); // one beat
+    delay((60L*1000 / BPM)); // one beat
     for (int j = 0; j < 8; j++) {
       digitalWrite(stepPins[j], LOW);                  
     }                
-    delay((60*1000 / BPM)); // one beat         
+    delay((60L*1000 / BPM)); // one beat         
   }
   // show that it has been sucsessfully done
   return true;
@@ -167,6 +167,7 @@ void loop() {
   }
   if (maxBtnHoldDuration >= 5000 ) {
     //NOTE NEED TO LOCK THIS AFTER FIRST RUN!!!! 
+    maxBtnHoldDuration = 0;
     //record or not to record that is the queetsion
     if (buttonPresses > 1) { // >1 then just cycle through the buttons chosen
       autoBtnMode = 0;
@@ -175,7 +176,7 @@ void loop() {
       if (autoBtnMode == 2) {
         autoBtnMode = 2;
       } else {autoBtnMode = 1;}
-
+      
       // more than one buttons are pressed, so autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! !!
       // first do countdown do da doooo dooo.. do da dooodod dooo
       if (countdown()) {
@@ -323,9 +324,11 @@ void loop() {
     }
     sequenceStepTimeStart = millis();
     if(autoBtnMode <= 1 ) { //modes that follow BPM
-      sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;//60/BPM*1000;
+      sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;
       stepTriggered = true;
-      currentStep = autoRec[currentAutoRecStep];
+      if (autoBtnMode == 0 ){
+        //currentStep += direction;
+      } else { currentStep = autoRec[currentAutoRecStep]; }
       //currentAutoRecStep++;
     } else if (autoBtnMode == 2) { //mode that follows recorded input
       //here it will need to follow the lists provided to know when to start 

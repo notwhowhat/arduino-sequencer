@@ -117,7 +117,7 @@ void loop() {
             } else {
               BPM -= 1;
             }
-            //loopTriggerBPM = 1; //this makes it go forward in auto mode .. removed now as was anoying to test.
+            loopTriggerBPM = 1; //this makes it go forward in auto mode .. removed now as was anoying to test.
           } else if (loopTriggerBPM > 0 && swiHoldDuration >= 1000 + (loopTriggerBPM -1 ) * 200 ) {
             //change BPM based on time held ~5 for every 1 second
             if (direction == directionNow) {

@@ -13,11 +13,12 @@ bool resetActive = false;
 bool zeroActive = false;
 
 int currentStep = 0; //which step is current 0 is not visible while 1-8 are shown with LEDs via stepPins
+bool currentStepOn = false; //tells if current step should be on = true or off = false
 int direction = 0; //direction sequence or step will go : 1 for forward, -1 for reverse, 0 for current step
 int directionNow = 1; //direction now chosen : 1 = forward, -1 = reverse
 int swiState = 0; // 0 = steady state (off/LOW), this is used to make sure we do not count 1 press as multiples by checking for release
 int btnState[] = {0,0,0,0,0,0,0,0};
-int autoArpeggiator[8];
+//int autoArpeggiator[8];
 int autoBtnMode = 0; //0 = excluding buttons/steps @BPM, 1 = output record mode order of presses @BPM, 2 = ouput record mode order of presses, holds and spaces
 int autoRecordingStep = 0; // in autoBtnMode 1 or 2 used to track which step we are at for output.
 
@@ -49,15 +50,79 @@ void setup() {
   pinMode(reverseSwiPin, INPUT);
   pinMode(resetSwiPin, INPUT);
   pinMode(zeroSwiPin, INPUT);
+  startTest();
+}
+
+
+void outputPins(int currentStep, bool currentStepOn, bool btnState[] ) {
+  //ouput given sequence steps
+  for (int i = 0; i < 8; i++) {
+    if ((currentStep == i && currentStepOn == true) || btnState[i] == true ) {
+      digitalWrite(stepPins[i], HIGH);
+    } else {
+      digitalWrite(stepPins[i], LOW);
+    }
+  }
+}
+
+void startTest( ) {
+  //ouput given sequence steps
+ for (int j = 7; j >= -2; j--) { 
+  currentStep = j;
+  for (int i = 0; i < 8; i++) {
+      if (currentStep == i || currentStep == i-1 ) {
+        digitalWrite(stepPins[i], HIGH);
+      } else {
+        digitalWrite(stepPins[i], LOW);
+      }
+      delay(25);
+    }
+  }
+}
+
+
+bool countdown(void) {
+  /*
+  if (countdownTime + (60000 / BPM * 6) > millis()) {
+    // start flashing
+    for (int j = 0; j < 8; j++) {
+      digitalWrite(stepPins[j], HIGH);                  
+    }
+    delay((60000 / BPM)); // one beat
+    for (int j = 0; j < 8; j++) {
+      digitalWrite(stepPins[j], LOW);                  
+    }                
+    delay((60000 / BPM)); // one beat         
+    // show that it has been sucsessfully done
+    return true;
+  }
+  return false;
+  */
+
+  for (int i = 0; i < 4; i++) {
+    // start flashing
+    for (int j = 0; j < 8; j++) {
+      digitalWrite(stepPins[j], HIGH);                  
+    }
+    delay((60L*1000 / BPM)); // one beat
+    for (int j = 0; j < 8; j++) {
+      digitalWrite(stepPins[j], LOW);                  
+    }                
+    delay((60L*1000 / BPM)); // one beat         
+  }
+  // show that it has been sucsessfully done
+  return true;
 }
 
 void loop() {
+
   // keyboard button press check
   int btnsPressed = 0;
   for (int i = 0; i < 8; i++) {
     tmpDigitalRead = digitalRead(keyboardBtnPins[i]);
     if (tmpDigitalRead == true) {
       currentStep = i;
+      currentStepOn = true;
       btnsPressed++;
       if (autoMode) {
         btnState[i] = 1;
@@ -71,8 +136,7 @@ void loop() {
       //}
     }
   }
-  if (btnsPressed==0 && !autoMode){ currentStep =-1;}
-
+  if (btnsPressed==0 && !autoMode){currentStepOn = false;}
   // function switch press check
   
   resetActive = digitalRead(resetSwiPin);
@@ -118,6 +182,7 @@ void loop() {
       */
       if (forwardActive || reverseActive) {
         if (!autoMode ) { 
+          currentStepOn = true;
           direction = directionNow;
           if (swiHoldDuration >= 1000) {
             autoMode = true;
@@ -152,6 +217,7 @@ void loop() {
     swiState = 0;
     swiPressTime = 0;
     loopTriggerBPM = 0;
+    if (!autoMode){ currentStepOn = false;}
   }
   
   // ouput assimilation
@@ -214,7 +280,7 @@ void loop() {
   
   //ouput given sequence steps
   for (int i = 0; i < 8; i++) {
-    if (currentStep == i || btnState[i] == 1 ) {
+    if ((currentStep == i && currentStepOn == true) || btnState[i] == 1 ) {
       digitalWrite(stepPins[i], HIGH);
     } else {
       digitalWrite(stepPins[i], LOW);

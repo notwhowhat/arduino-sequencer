@@ -31,6 +31,7 @@ bool stepTriggered = false; //true if a step has been triggered but not yet solv
 bool autoMode = false; //if true then in sequence program mode where sequence will proceed at BPM or according to autoBtnMode
 int loopTriggerBPM = 0; //if 1 or above then loop in BPM setting has been triggered, 0 if not triggered
 bool tmpDigitalRead = false; // low = false high = true for tmp button
+int maxBtnHoldDuration = 0; //to follow the maximum time the buttons are held
 
 //bool inZeroMode = false;
 //unsigned long sequenceStepTime = 0;
@@ -55,7 +56,7 @@ void setup() {
   startTest();
 }
 
-
+//ouput !!
 void outputPins(int currentStep, bool currentStepOn, bool btnState[] ) {
   //ouput given sequence steps
   for (int i = 0; i < 8; i++) {
@@ -66,7 +67,7 @@ void outputPins(int currentStep, bool currentStepOn, bool btnState[] ) {
     }
   }
 }
-
+//startup test of system 
 void startTest( ) {
   //ouput given sequence steps
  for (int j = 7; j >= -2; j--) { 
@@ -82,7 +83,7 @@ void startTest( ) {
   }
 }
 
-
+//count down pre recording to record button presses
 bool countdown(void) {
   /*
   if (countdownTime + (60000 / BPM * 6) > millis()) {
@@ -115,8 +116,9 @@ bool countdown(void) {
   // show that it has been sucsessfully done
   return true;
 }
+
 /*--------------------------------------------
-loop()
+main loop()!!!
 
 
 --------------------------------------------*/
@@ -143,10 +145,11 @@ void loop() {
     }
   }
   if (btnsPressed==0 && !autoMode){currentStepOn = false;}
+
   //--------------------------------------------
   //--- button processing
   millisNow = millis();
-  int maxBtnHoldDuration = 0;
+  
   for (int i = 0; i < 8; i++) {
     if (btnState[i] == true ) {
       btnsPressed += 1;
@@ -156,6 +159,7 @@ void loop() {
       }
     }
   }
+  
   if (maxBtnHoldDuration >= 5000 ) {
     //NOTE NEED TO LOCK THIS AFTER FIRST RUN!!!! 
     maxBtnHoldDuration = 0;
@@ -163,6 +167,7 @@ void loop() {
     if (btnsPressed > 1) { // >1 then just cycle through the buttons chosen
       autoBtnMode = 0;
       autoRecStep = btnsPressed;
+      countdown();
     } /*else if (buttonPresses == 1) {
       if (autoBtnMode == 2) {
         autoBtnMode = 2;

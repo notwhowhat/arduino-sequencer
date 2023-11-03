@@ -31,7 +31,7 @@ bool stepTriggered = false; //true if a step has been triggered but not yet solv
 bool autoMode = false; //if true then in sequence program mode where sequence will proceed at BPM or according to autoBtnMode
 int loopTriggerBPM = 0; //if 1 or above then loop in BPM setting has been triggered, 0 if not triggered
 bool tmpDigitalRead = false; // low = false high = true for tmp button
-int maxBtnHoldDuration = 0; //to follow the maximum time the buttons are held
+
 
 //bool inZeroMode = false;
 //unsigned long sequenceStepTime = 0;
@@ -57,7 +57,7 @@ void setup() {
 }
 
 //ouput !!
-void outputPins(int currentStep, bool currentStepOn, bool btnState[] ) {
+void outputPins(){//int currentStep, bool currentStepOn, bool btnState[] ) {
   //ouput given sequence steps
   for (int i = 0; i < 8; i++) {
     if ((currentStep == i && currentStepOn == true) || btnState[i] == true ) {
@@ -67,10 +67,11 @@ void outputPins(int currentStep, bool currentStepOn, bool btnState[] ) {
     }
   }
 }
+
 //startup test of system 
 void startTest( ) {
   //ouput given sequence steps
- for (int j = 7; j >= -2; j--) { 
+ for (int j = 0; j <= 10; j++) { 
   currentStep = j;
   for (int i = 0; i < 8; i++) {
       if (currentStep == i || currentStep == i-1 ) {
@@ -84,7 +85,7 @@ void startTest( ) {
 }
 
 //count down pre recording to record button presses
-bool countdown(void) {
+bool countDown(int loops) {
   /*
   if (countdownTime + (60000 / BPM * 6) > millis()) {
     // start flashing
@@ -102,7 +103,7 @@ bool countdown(void) {
   return false;
   */
 
-  for (int i = 0; i < 4; i++) {
+  for (int i = 0; i < loops; i++) {
     // start flashing
     for (int j = 0; j < 8; j++) {
       digitalWrite(stepPins[j], HIGH);                  
@@ -120,21 +121,20 @@ bool countdown(void) {
 /*--------------------------------------------
 main loop()!!!
 
-
 --------------------------------------------*/
 void loop() {
-
+  millisNow = millis();
   // keyboard button press check
   int btnsPressed = 0;
   for (int i = 0; i < 8; i++) {
     tmpDigitalRead = digitalRead(keyboardBtnPins[i]);
-    if (tmpDigitalRead == true) {
+    if (tmpDigitalRead == true && btnState[i]==0) {
       currentStep = i;
       currentStepOn = true;
       btnsPressed++;
       if (autoMode) {
         btnState[i] = 1;
-        btnPressTime[i] = millis();
+        btnPressTime[i] = millisNow;
       }
     } else if (tmpDigitalRead == false) {
       btnState[i] = 0;
@@ -148,26 +148,28 @@ void loop() {
 
   //--------------------------------------------
   //--- button processing
-  millisNow = millis();
-  
-  for (int i = 0; i < 8; i++) {
-    if (btnState[i] == true ) {
-      btnsPressed += 1;
-      btnHoldDuration[i] = millisNow - btnPressTime[i];
-      if (maxBtnHoldDuration < btnHoldDuration[i] ) {
-        maxBtnHoldDuration = btnHoldDuration[i];
+  int maxBtnHoldDuration = 0; //initilization to follow the maximum time the buttons are held as it loops through teh folloiwng loop
+
+  if(autoMode) {
+    for (int i = 0; i < 8; i++) {
+      if (btnState[i] == true ) {
+        btnsPressed += 1;
+        btnHoldDuration[i] = millisNow - btnPressTime[i];
+        if (maxBtnHoldDuration < btnHoldDuration[i] ) {
+          maxBtnHoldDuration = btnHoldDuration[i];
+        }
       }
     }
   }
   
   if (maxBtnHoldDuration >= 5000 ) {
-    //NOTE NEED TO LOCK THIS AFTER FIRST RUN!!!! 
+    //NOTE NEED TO LOCK THIS AFTER FIRST RUN!!!! , setting maxBtnHoldDuration=0 should do it!
     maxBtnHoldDuration = 0;
     //record or not to record that is the queetsion
     if (btnsPressed > 1) { // >1 then just cycle through the buttons chosen
       autoBtnMode = 0;
       autoRecStep = btnsPressed;
-      countdown();
+      countDown(1);
     } /*else if (buttonPresses == 1) {
       if (autoBtnMode == 2) {
         autoBtnMode = 2;
@@ -175,7 +177,7 @@ void loop() {
       
       // more than one buttons are pressed, so autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! !!
       // first do countdown do da doooo dooo.. do da dooodod dooo
-      if (countdown()) {
+      if (countDown()) {
         // the countdown has sucessfully been finnished
         // next: time to record
         // this needs to have all elements of the buttons but also only gets to be run once
@@ -368,7 +370,8 @@ void loop() {
     }  
   }
   */
-  
+  outputPins();
+  /*
   //ouput given sequence steps
   for (int i = 0; i < 8; i++) {
     if ((currentStep == i && currentStepOn == true) || btnState[i] == 1 ) {
@@ -377,5 +380,5 @@ void loop() {
       digitalWrite(stepPins[i], LOW);
     }
   }
-  
+  */
 }

@@ -1,11 +1,5 @@
 {
     "board": "arduino:avr:uno",
-<<<<<<< HEAD
-    "port": "COM5"
-=======
     "port": "COM5",
-    "programmer": "avrisp",
-    "output": "../ArduinoOutput",
     "sketch": "arduino-sequencer.ino"
->>>>>>> origin/millis-ification
 }

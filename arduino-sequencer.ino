@@ -21,8 +21,9 @@ int btnState[] = {0,0,0,0,0,0,0,0};
 //int autoArpeggiator[8];
 int autoBtnMode = 0; //0 = excluding buttons/steps @BPM, 1 = output record mode order of presses @BPM, 2 = ouput record mode order of presses, holds and spaces
 //int autoRecordingStep = 0; // in autoBtnMode 1 or 2 used to track which step we are at for output.
-int autoRecStep = 0; // in autoBtnMode 1 or 2 used to track which step we are at for output.
+int autoRecStep = 0; // in autoBtnMode 0, 1 or 2 used to track which step we are at for output.
 int currentAutoRecStep = 0; // in autoBtnMode for determining which step one is in
+int outputListSize = 0; // size of the 
 
 //define variables (for BPM and millis)
 int BPM = 60;
@@ -53,6 +54,7 @@ void setup() {
   for (int i = 0; i < 8; i++) {
     pinMode(keyboardBtnPins[i], INPUT);
     pinMode(stepPins[i], OUTPUT);
+    outputList[i]=i;
   }
   pinMode(forwardSwiPin, INPUT);
   pinMode(reverseSwiPin, INPUT);
@@ -62,13 +64,24 @@ void setup() {
 }
 
 //ouput !!
-void outputPins(){//int currentStep, bool currentStepOn, bool btnState[] ) {
+void outputPins0(){//int currentStep, bool currentStepOn, bool btnState[] ) {
   //ouput given sequence steps
   for (int i = 0; i < 8; i++) {
     if ((currentStep == i && currentStepOn == true) || btnState[i] == true ) {
       digitalWrite(stepPins[i], HIGH);
     } else {
       digitalWrite(stepPins[i], LOW);
+    }
+  }
+}
+
+void outputPins(int steps){//int currentStep, bool currentStepOn, bool btnState[] ) {
+  //ouput given sequence steps
+  for (int i = 0; i < steps; i++) {
+    if ((currentStep == i && currentStepOn == true) || btnState[i] == true ) {
+      digitalWrite(stepPins[outputList[i]], HIGH);
+    } else {
+      digitalWrite(stepPins[outputList[i]], LOW);
     }
   }
 }
@@ -137,6 +150,7 @@ void loop() {
       currentStep = i;
       currentStepOn = true;
       btnsPressed++;
+      outputList[btnsPressed]=i;
       if (autoMode) {
         btnState[i] = 1;
         btnPressTime[i] = millisNow;
@@ -173,7 +187,7 @@ void loop() {
     //record or not to record that is the queetsion
     if (btnsPressed > 1) { // >1 then just cycle through the buttons chosen
       autoBtnMode = 0;
-      autoRecStep = btnsPressed;
+      outputListSize = btnsPressed;
       countDown(1);
     } /*else if (buttonPresses == 1) {
       if (autoBtnMode == 2) {
@@ -249,6 +263,10 @@ void loop() {
         if (resetActive) {
           currentStep = -1;
           autoMode = false;
+          
+          for (int i = 0; i < 8; i++) {
+            outputList[i] = 0;
+          }
           for (int i = 0; i < 8; i++) {
             digitalWrite(stepPins[i], LOW);
           }
@@ -269,14 +287,17 @@ void loop() {
     } 
     if (swiState == 1 ) {
       swiHoldDuration = millisNow - swiPressTime;
-      /*
-      if (zeroActive) {
-        if (swiHoldDuration >= 2000) {
+      
+      if (swiHoldDuration >= 2000) {
+        if (resetActive) {
+          autoBtnMode = -1;
+        } else if (zeroActive) {
           if (autoBtnMode == 1) { autoBtnMode = 2;}
           if (autoBtnMode == 2) { autoBtnMode = 1;}      
         }
       }
-      */
+      
+      
       if (forwardActive || reverseActive) {
         if (!autoMode ) { 
           currentStepOn = true;
@@ -345,16 +366,26 @@ void loop() {
 
   //find next step if triggered via forward or reverse or via auotmode
   if (stepTriggered == true) {
-    digitalWrite(stepPins[currentStep], LOW);
-    
+    //digitalWrite(stepPins[currentStep], LOW);
+    //to fix so it uses ouputList[] && 7 = autoRecStep
     stepTriggered = false;
-    currentStep += direction;
-    if (currentStep > 7 ) {
-      currentStep = 0;
-    } else if (currentStep < 0 ) {
-      currentStep = 7;
+    if (autoMode && autoBtnMode >= 0 && outputListSize != 0) {
+      autoRecStep +=direction;
+      if (autoRecStep > outputListSize ) {
+        autoRecStep = 0;
+      } else if (autoRecStep < 0 ) {
+        autoRecStep = outputListSize;
+      }
+      currentStep = outputList[autoRecStep];
+    } else {
+      currentStep += direction;
+      if (currentStep > 7 ) {
+        currentStep = 0;
+      } else if (currentStep < 0 ) {
+        currentStep = 7;
+      }
     }
-    digitalWrite(stepPins[currentStep], HIGH);
+    //digitalWrite(stepPins[currentStep], HIGH);
   }
   
   
@@ -375,7 +406,14 @@ void loop() {
     }  
   }
   */
-  outputPins();
+  outputPins0();
+  /*
+  if (autoBtnMode==0) {
+    outputPins(autoRecStep);
+  } else {
+    outputPins(8);
+  }
+  */
   /*
   //ouput given sequence steps
   for (int i = 0; i < 8; i++) {

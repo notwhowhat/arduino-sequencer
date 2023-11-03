@@ -32,6 +32,11 @@ bool autoMode = false; //if true then in sequence program mode where sequence wi
 int loopTriggerBPM = 0; //if 1 or above then loop in BPM setting has been triggered, 0 if not triggered
 bool tmpDigitalRead = false; // low = false high = true for tmp button
 
+// for recording the notes. 64 steps max len
+bool autoRecStart = false;
+int outputList[64];
+unsigned long autoRecBtnTimeStart[64];
+unsigned long autoRecDuration[64];
 
 //bool inZeroMode = false;
 //unsigned long sequenceStepTime = 0;
@@ -194,7 +199,7 @@ void loop() {
               btnPressTime[k] = millisNow;
             } else if (tmpDigitalRead == false && btnState[k] == true ) {
               // opposite of last check, so the note has finnished between now and last cycle
-              autoRec[autoRecStep] = k;
+              outputList[autoRecStep] = k;
 
               autoRecBtnTimeStart[autoRecStep] = btnPressTime[k] - millisStart; // the start of the press was recorded before
               autoRecDuration[autoRecStep] = millisNow - autoRecBtnTimeStart[autoRecStep]; // duration of press

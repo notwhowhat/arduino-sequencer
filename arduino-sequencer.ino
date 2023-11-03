@@ -20,7 +20,9 @@ int swiState = 0; // 0 = steady state (off/LOW), this is used to make sure we do
 int btnState[] = {0,0,0,0,0,0,0,0};
 //int autoArpeggiator[8];
 int autoBtnMode = 0; //0 = excluding buttons/steps @BPM, 1 = output record mode order of presses @BPM, 2 = ouput record mode order of presses, holds and spaces
-int autoRecordingStep = 0; // in autoBtnMode 1 or 2 used to track which step we are at for output.
+//int autoRecordingStep = 0; // in autoBtnMode 1 or 2 used to track which step we are at for output.
+int autoRecStep = 0; // in autoBtnMode 1 or 2 used to track which step we are at for output.
+int currentAutoRecStep = 0; // in autoBtnMode for determining which step one is in
 
 //define variables (for BPM and millis)
 int BPM = 60;
@@ -113,7 +115,11 @@ bool countdown(void) {
   // show that it has been sucsessfully done
   return true;
 }
+/*--------------------------------------------
+loop()
 
+
+--------------------------------------------*/
 void loop() {
 
   // keyboard button press check
@@ -137,8 +143,87 @@ void loop() {
     }
   }
   if (btnsPressed==0 && !autoMode){currentStepOn = false;}
-  // function switch press check
+  //--------------------------------------------
+  //--- button processing
+  millisNow = millis();
+  int maxBtnHoldDuration = 0;
+  for (int i = 0; i < 8; i++) {
+    if (btnState[i] == true ) {
+      btnsPressed += 1;
+      btnHoldDuration[i] = millisNow - btnPressTime[i];
+      if (maxBtnHoldDuration < btnHoldDuration[i] ) {
+        maxBtnHoldDuration = btnHoldDuration[i];
+      }
+    }
+  }
+  if (maxBtnHoldDuration >= 5000 ) {
+    //NOTE NEED TO LOCK THIS AFTER FIRST RUN!!!! 
+    maxBtnHoldDuration = 0;
+    //record or not to record that is the queetsion
+    if (btnsPressed > 1) { // >1 then just cycle through the buttons chosen
+      autoBtnMode = 0;
+      autoRecStep = btnsPressed;
+    } /*else if (buttonPresses == 1) {
+      if (autoBtnMode == 2) {
+        autoBtnMode = 2;
+      } else {autoBtnMode = 1;}
+      
+      // more than one buttons are pressed, so autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! !!
+      // first do countdown do da doooo dooo.. do da dooodod dooo
+      if (countdown()) {
+        // the countdown has sucessfully been finnished
+        // next: time to record
+        // this needs to have all elements of the buttons but also only gets to be run once
+        for (int i = 0; i < 8; i++) {btnState[i] = 0; } // clear btnState for recording
+        millisStart = millis();
+        bool whileCntrl = true; //check for while
+        do {
+          millisNow = millis(); 
+          for (int k = 0; k < 8; k++) { // loops through all of the buttons for to check if they have been pressed
+            tmpDigitalRead = digitalRead(keyboardBtnPins[k]);
+            if (tmpDigitalRead == true && btnState[k] == false ) {
+              // was false last cycle and true now, so new note and new values
+              btnState[k] = true;
+              btnPressTime[k] = millisNow;
+            } else if (tmpDigitalRead == false && btnState[k] == true ) {
+              // opposite of last check, so the note has finnished between now and last cycle
+              autoRec[autoRecStep] = k;
+
+              autoRecBtnTimeStart[autoRecStep] = btnPressTime[k] - millisStart; // the start of the press was recorded before
+              autoRecDuration[autoRecStep] = millisNow - autoRecBtnTimeStart[autoRecStep]; // duration of press
+              autoRecStep++;
+              btnState[k] = false;
+            } else if (tmpDigitalRead == false && btnState[k] == false ) {
+              btnState[k] = false;
+            }
+          }
+          // show the pressed button (should be just one :) .. what if it isn't :S )
+          outputPins(0, btnState);
+          
+          if (autoRecStep > 0 ) {  //check for dead space of 5seconds, true if not > 5000 and not first time through
+            if (millisNow - (autoRecBtnTimeStart[autoRecStep-1] + autoRecDuration[autoRecStep-1]) < 5000 ) {
+              whileCntrl = false;
+            }
+            if (autoRecDuration[autoRecStep] < 5000 ) {
+              whileCntrl = false;
+              autoRecStep--;
+            }
+          } else { whileCntrl = true; }
+
+        } while (whileCntrl ) ; // set to check if last note was 5 seconds long, if so done!
+        //countdown(); // marker: the countdown and recording ends here
+      }
+    }
+    autoRecStart = false;
+    */
+      
+  } 
   
+
+
+
+  //--------------------------------------------
+  // switch press check
   resetActive = digitalRead(resetSwiPin);
   zeroActive = digitalRead(zeroSwiPin);
   forwardActive = digitalRead(forwardSwiPin);
@@ -219,7 +304,8 @@ void loop() {
     loopTriggerBPM = 0;
     if (!autoMode){ currentStepOn = false;}
   }
-  
+
+  //--------------------------------------------
   // ouput assimilation
   // automode
   if (autoMode && millisNow > sequenceStepTimeNext) { //if true then next step in automode has been surpassed so lets trigger a step
@@ -231,13 +317,13 @@ void loop() {
     } else if (autoBtnMode == 2) { //mode that follows recorded input
       //here it will need to follow the lists provided to know when to start 
       sequenceStepTimeStart = millis();
-      sequenceStepTimeNext = sequenceStepTimeStart + btnPressTime[autoRecordingStep]; 
-      autoRecordingStep +=1;
-      //check if autoRecordingStep is above number of steps if so then startover.
+      sequenceStepTimeNext = sequenceStepTimeStart + btnPressTime[autoRecStep]; 
+      autoRecStep +=1;
+      //check if autoRecStep is above number of steps if so then startover.
       //!!! need to fix output, clear all ouput
       //clear all output except output button
       //then
-      //~~~~>?? currentStep = autoRecordingBtn[autoRecordingStep];
+      //~~~~>?? currentStep = autoRecordingBtn[autoRecStep];
     } else {
       // normal basic autoMode
       sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;//60/BPM*1000;

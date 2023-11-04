@@ -202,13 +202,13 @@ void loop() {
       if (autoBtnMode == 2) {
         autoBtnMode = 2;
       } else {autoBtnMode = 1;}
-      countDown(1);
+      countDown(1, 1);
     } else if (btnsPressed == 1) {
       //if (autoBtnMode == 2) {
       //  autoBtnMode = 2;
       //} else {autoBtnMode = 1;}
       autoBtnMode = 1;
-      countDown(3);
+      countDown(3, 1);
       
       // more than one buttons are pressed, so autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! !!
       // first do countdown do da doooo dooo.. do da dooodod dooo
@@ -258,7 +258,7 @@ void loop() {
 
       } while (whileCntrl ) ; // set to check if last note was 5 seconds long, if so done!
       //countdown(); // marker: the countdown and recording ends here
-      countDown(1);
+      countDown(1, 1);
     }
     autoRecStart = false;
     //*/

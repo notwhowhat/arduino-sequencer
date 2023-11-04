@@ -171,9 +171,10 @@ void loop() {
 
   if(autoMode) {
     btnsPressed = 0;
-    for (int i = 0; i < 64; i++) {
+    /*for (int i = 0; i < 64; i++) {
       outputList[i] = 0;
     }
+    */
     for (int i = 0; i < 8; i++) {
       if (btnState[i] == true ) {
         outputList[btnsPressed] = i;
@@ -192,7 +193,7 @@ void loop() {
     //record or not to record that is the queetsion
     if (btnsPressed > 1) { // >1 then just cycle through the buttons chosen
       autoBtnMode = 0;
-      //autoRecStep = 0;
+      autoRecStep = -1;
       outputListSize = btnsPressed-1;
       btnsPressed = 0;
       countDown(1);
@@ -375,8 +376,8 @@ void loop() {
     //digitalWrite(stepPins[currentStep], LOW);
     //to fix so it uses ouputList[] && 7 = autoRecStep
     stepTriggered = false;
-    if (autoMode && autoBtnMode >= 0 && outputListSize != 0) { //autoMode && 
-      autoRecStep +=direction;
+    if (autoBtnMode >= 0 && outputListSize != 0) { //autoMode && 
+      autoRecStep += direction;
       if (autoRecStep > outputListSize ) {
         autoRecStep = 0;
       } else if (autoRecStep < 0 ) {

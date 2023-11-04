@@ -43,6 +43,7 @@ unsigned long autoRecDuration[64];
 //bool inZeroMode = false;
 //unsigned long sequenceStepTime = 0;
 unsigned long millisNow = millis();
+unsigned long millisStart = millisNow; // used to normalize the millis in recording :)
 unsigned long sequenceStepTimeStart = millisNow;
 unsigned long sequenceStepTimeNext = sequenceStepTimeStart + 60/BPM*1000; //given current sequence time, this will provide the next moment when the sequence will move in direction given
 unsigned long swiPressTime = 0; //millis when pressed
@@ -197,14 +198,14 @@ void loop() {
       outputListSize = btnsPressed-1;
       btnsPressed = 0;
       countDown(3, 0.33);
-    } /*else if (buttonPresses == 1) {
+    } else if (btnsPressed == 1) {
       if (autoBtnMode == 2) {
         autoBtnMode = 2;
       } else {autoBtnMode = 1;}
       
       // more than one buttons are pressed, so autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! !!
       // first do countdown do da doooo dooo.. do da dooodod dooo
-      if (countDown()) {
+      if (countDown(3, 1)) {
         // the countdown has sucessfully been finnished
         // next: time to record
         // this needs to have all elements of the buttons but also only gets to be run once
@@ -232,7 +233,7 @@ void loop() {
             }
           }
           // show the pressed button (should be just one :) .. what if it isn't :S )
-          outputPins(0, btnState);
+          outputPins0();//0, btnState);
           
           if (autoRecStep > 0 ) {  //check for dead space of 5seconds, true if not > 5000 and not first time through
             if (millisNow - (autoRecBtnTimeStart[autoRecStep-1] + autoRecDuration[autoRecStep-1]) < 5000 ) {
@@ -249,7 +250,7 @@ void loop() {
       }
     }
     autoRecStart = false;
-    */
+    
       
   } 
   

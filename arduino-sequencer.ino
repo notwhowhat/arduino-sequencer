@@ -26,7 +26,7 @@ int currentAutoRecStep = 0; // in autoBtnMode for determining which step one is 
 
 
 //define variables (for BPM and millis)
-int BPM = 60;
+int BPM = 80;
 //int BPMnow = BPM;
 bool stepTriggered = false; //true if a step has been triggered but not yet solved
 bool autoMode = false; //if true then in sequence program mode where sequence will proceed at BPM or according to autoBtnMode
@@ -43,6 +43,7 @@ unsigned long autoRecDuration[64];
 //bool inZeroMode = false;
 //unsigned long sequenceStepTime = 0;
 unsigned long millisNow = millis();
+unsigned long millisStart = millisNow; // used to normalize the millis in recording :)
 unsigned long sequenceStepTimeStart = millisNow;
 unsigned long sequenceStepTimeNext = sequenceStepTimeStart + 60/BPM*1000; //given current sequence time, this will provide the next moment when the sequence will move in direction given
 unsigned long swiPressTime = 0; //millis when pressed
@@ -104,7 +105,7 @@ void startTest( ) {
 }
 
 //count down pre recording to record button presses
-bool countDown(int loops) {
+bool countDown(int loops, float BPMfactor) {
   /*
   if (countdownTime + (60000 / BPM * 6) > millis()) {
     // start flashing
@@ -127,11 +128,11 @@ bool countDown(int loops) {
     for (int j = 0; j < 8; j++) {
       digitalWrite(stepPins[j], HIGH);                  
     }
-    delay((60L*1000 / BPM)); // one beat
+    delay((60L*1000 / BPM * BPMfactor)); // one beat
     for (int j = 0; j < 8; j++) {
       digitalWrite(stepPins[j], LOW);                  
     }                
-    delay((60L*1000 / BPM)); // one beat         
+    delay((60L*1000 / BPM * BPMfactor)); // one beat         
   }
   // show that it has been sucsessfully done
   return true;
@@ -171,9 +172,10 @@ void loop() {
 
   if(autoMode) {
     btnsPressed = 0;
-    for (int i = 0; i < 64; i++) {
+    /*for (int i = 0; i < 64; i++) {
       outputList[i] = 0;
     }
+    */
     for (int i = 0; i < 8; i++) {
       if (btnState[i] == true ) {
         outputList[btnsPressed] = i;
@@ -192,9 +194,14 @@ void loop() {
     //record or not to record that is the queetsion
     if (btnsPressed > 1) { // >1 then just cycle through the buttons chosen
       autoBtnMode = 0;
-      //autoRecStep = 0;
+      autoRecStep = -1;
       outputListSize = btnsPressed-1;
       btnsPressed = 0;
+      countDown(3, 0.33);
+    } else if (btnsPressed == 1) {
+      if (autoBtnMode == 2) {
+        autoBtnMode = 2;
+      } else {autoBtnMode = 1;}
       countDown(1);
     } else if (btnsPressed == 1) {
       //if (autoBtnMode == 2) {
@@ -381,8 +388,8 @@ void loop() {
     //digitalWrite(stepPins[currentStep], LOW);
     //to fix so it uses ouputList[] && 7 = autoRecStep
     stepTriggered = false;
-    if (autoMode && autoBtnMode >= 0 && outputListSize != 0) { //autoMode && 
-      autoRecStep +=direction;
+    if (autoBtnMode >= 0 && outputListSize != 0) { //autoMode && 
+      autoRecStep += direction;
       if (autoRecStep > outputListSize ) {
         autoRecStep = 0;
       } else if (autoRecStep < 0 ) {

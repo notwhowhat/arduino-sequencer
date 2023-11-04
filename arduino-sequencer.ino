@@ -26,7 +26,7 @@ int currentAutoRecStep = 0; // in autoBtnMode for determining which step one is 
 
 
 //define variables (for BPM and millis)
-int BPM = 60;
+int BPM = 80;
 //int BPMnow = BPM;
 bool stepTriggered = false; //true if a step has been triggered but not yet solved
 bool autoMode = false; //if true then in sequence program mode where sequence will proceed at BPM or according to autoBtnMode
@@ -104,7 +104,7 @@ void startTest( ) {
 }
 
 //count down pre recording to record button presses
-bool countDown(int loops) {
+bool countDown(int loops, float BPMfactor) {
   /*
   if (countdownTime + (60000 / BPM * 6) > millis()) {
     // start flashing
@@ -127,11 +127,11 @@ bool countDown(int loops) {
     for (int j = 0; j < 8; j++) {
       digitalWrite(stepPins[j], HIGH);                  
     }
-    delay((60L*1000 / BPM)); // one beat
+    delay((60L*1000 / BPM * BPMfactor)); // one beat
     for (int j = 0; j < 8; j++) {
       digitalWrite(stepPins[j], LOW);                  
     }                
-    delay((60L*1000 / BPM)); // one beat         
+    delay((60L*1000 / BPM * BPMfactor)); // one beat         
   }
   // show that it has been sucsessfully done
   return true;
@@ -196,7 +196,7 @@ void loop() {
       autoRecStep = -1;
       outputListSize = btnsPressed-1;
       btnsPressed = 0;
-      countDown(1);
+      countDown(3, 0.33);
     } /*else if (buttonPresses == 1) {
       if (autoBtnMode == 2) {
         autoBtnMode = 2;

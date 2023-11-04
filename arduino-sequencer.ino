@@ -196,59 +196,65 @@ void loop() {
       outputListSize = btnsPressed-1;
       btnsPressed = 0;
       countDown(1);
-    } /*else if (buttonPresses == 1) {
-      if (autoBtnMode == 2) {
-        autoBtnMode = 2;
-      } else {autoBtnMode = 1;}
+    } else if (btnsPressed == 1) {
+      //if (autoBtnMode == 2) {
+      //  autoBtnMode = 2;
+      //} else {autoBtnMode = 1;}
+      autoBtnMode = 1;
+      countDown(3);
       
       // more than one buttons are pressed, so autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! !!
       // first do countdown do da doooo dooo.. do da dooodod dooo
-      if (countDown()) {
-        // the countdown has sucessfully been finnished
-        // next: time to record
-        // this needs to have all elements of the buttons but also only gets to be run once
-        for (int i = 0; i < 8; i++) {btnState[i] = false; } // clear btnState for recording
-        millisStart = millis();
-        bool whileCntrl = true; //check for while
-        do {
-          millisNow = millis(); 
-          for (int k = 0; k < 8; k++) { // loops through all of the buttons for to check if they have been pressed
-            tmpDigitalRead = digitalRead(keyboardBtnPins[k]);
-            if (tmpDigitalRead == true && btnState[k] == false ) {
-              // was false last cycle and true now, so new note and new values
-              btnState[k] = true;
-              btnPressTime[k] = millisNow;
-            } else if (tmpDigitalRead == false && btnState[k] == true ) {
-              // opposite of last check, so the note has finnished between now and last cycle
-              outputList[autoRecStep] = k;
+      // the countdown has sucessfully been finnished
+      // next: time to record
+      // this needs to have all elements of the buttons but also only gets to be run once
+      for (int i = 0; i < 8; i++) {btnState[i] = false; } // clear btnState for recording
+      unsigned long millisStart = millis();
+      bool whileCntrl = true; //check for while
+      do {
+        millisNow = millis(); 
+        for (int k = 0; k < 8; k++) { // loops through all of the buttons for to check if they have been pressed
+          tmpDigitalRead = digitalRead(keyboardBtnPins[k]);
+          if (tmpDigitalRead == true && btnState[k] == false ) {
+            // was false last cycle and true now, so new note and new values
+            btnState[k] = true;
+            btnPressTime[k] = millisNow;
+          } else if (tmpDigitalRead == false && btnState[k] == true ) {
+            // opposite of last check, so the note has just finnished
+            // autoRecStep gets changed every time a note has finnished, and is saved for the order
+            // of the sequence
+            outputList[autoRecStep] = k;
 
-              autoRecBtnTimeStart[autoRecStep] = btnPressTime[k] - millisStart; // the start of the press was recorded before
-              autoRecDuration[autoRecStep] = millisNow - autoRecBtnTimeStart[autoRecStep]; // duration of press
-              autoRecStep++;
-              btnState[k] = false;
-            } else if (tmpDigitalRead == false && btnState[k] == false ) {
-              btnState[k] = false;
-            }
+            // subtracted by millisStart, for to get relative time values
+            autoRecBtnTimeStart[autoRecStep] = btnPressTime[k] - millisStart; // the start of the press was recorded before
+            autoRecDuration[autoRecStep] = millisNow - autoRecBtnTimeStart[autoRecStep]; // duration of press
+            autoRecStep++;
+            btnState[k] = false;
+          } else if (tmpDigitalRead == false && btnState[k] == false ) {
+            // if it has been false for a while, it will remain false
+            btnState[k] = false;
           }
-          // show the pressed button (should be just one :) .. what if it isn't :S )
-          outputPins(0, btnState);
-          
-          if (autoRecStep > 0 ) {  //check for dead space of 5seconds, true if not > 5000 and not first time through
-            if (millisNow - (autoRecBtnTimeStart[autoRecStep-1] + autoRecDuration[autoRecStep-1]) < 5000 ) {
-              whileCntrl = false;
-            }
-            if (autoRecDuration[autoRecStep] < 5000 ) {
-              whileCntrl = false;
-              autoRecStep--;
-            }
-          } else { whileCntrl = true; }
+        }
+        // show the pressed button (should be just one :) .. what if it isn't :S )
+        outputPins0();
+        
+        if (autoRecStep > 0 ) {  //check for dead space of 5seconds, true if not > 5000 and not first time through
+          if (millisNow - (autoRecBtnTimeStart[autoRecStep] + autoRecDuration[autoRecStep]) < 5000 ) {
+            whileCntrl = false;
+          }
+          if (autoRecDuration[autoRecStep] > 5000 ) {
+            // the duration of the last press
+            whileCntrl = false;
+            autoRecStep--;
+          }
+        } else { whileCntrl = true; }
 
-        } while (whileCntrl ) ; // set to check if last note was 5 seconds long, if so done!
-        //countdown(); // marker: the countdown and recording ends here
-      }
+      } while (whileCntrl ) ; // set to check if last note was 5 seconds long, if so done!
+      //countdown(); // marker: the countdown and recording ends here
+      countDown(1);
     }
     autoRecStart = false;
-    */
+    //*/
       
   } 
   

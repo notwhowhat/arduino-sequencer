@@ -17,13 +17,13 @@ bool currentStepOn = false; //tells if current step should be on = true or off =
 int direction = 0; //direction sequence or step will go : 1 for forward, -1 for reverse, 0 for current step
 int directionNow = 1; //direction now chosen : 1 = forward, -1 = reverse
 int swiState = 0; // 0 = steady state (off/LOW), this is used to make sure we do not count 1 press as multiples by checking for release
-int btnState[] = {0,0,0,0,0,0,0,0};
+bool btnState[] = {false,false,false,false,false,false,false,false};
 //int autoArpeggiator[8];
 int autoBtnMode = 0; //0 = including buttons/steps that the user presses @BPM, 1 = output record mode order of presses @BPM, 2 = ouput record mode order of presses, holds and spaces
 //int autoRecordingStep = 0; // in autoBtnMode 1 or 2 used to track which step we are at for output.
 int autoRecStep = 0; // in autoBtnMode 0, 1 or 2 used to track which step we are at for output.
 int currentAutoRecStep = 0; // in autoBtnMode for determining which step one is in
-int outputListSize = 0; // size of the 
+
 
 //define variables (for BPM and millis)
 int BPM = 60;
@@ -36,6 +36,7 @@ bool tmpDigitalRead = false; // low = false high = true for tmp button
 // for recording the notes. 64 steps max len
 bool autoRecStart = false;
 int outputList[64];
+int outputListSize = 0; // size of the outputList
 unsigned long autoRecBtnTimeStart[64];
 unsigned long autoRecDuration[64];
 
@@ -146,17 +147,16 @@ void loop() {
   int btnsPressed = 0;
   for (int i = 0; i < 8; i++) {
     tmpDigitalRead = digitalRead(keyboardBtnPins[i]);
-    if (tmpDigitalRead == true && btnState[i]==0) {
+    if (tmpDigitalRead == true && btnState[i] == false) {
       currentStep = i;
       currentStepOn = true;
-      outputList[btnsPressed]=i;
       btnsPressed++;
       if (autoMode) {
-        btnState[i] = 1;
+        btnState[i] = true;
         btnPressTime[i] = millisNow;
       }
     } else if (tmpDigitalRead == false) {
-      btnState[i] = 0;
+      btnState[i] = false;
       btnPressTime[i] = 0;
       //if (!autoMode) {
       //  currentStep = -1;
@@ -170,8 +170,13 @@ void loop() {
   int maxBtnHoldDuration = 0; //initilization to follow the maximum time the buttons are held as it loops through teh folloiwng loop
 
   if(autoMode) {
+    btnsPressed = 0;
+    for (int i = 0; i < 64; i++) {
+      outputList[i] = 0;
+    }
     for (int i = 0; i < 8; i++) {
       if (btnState[i] == true ) {
+        outputList[btnsPressed] = i;
         btnsPressed += 1;
         btnHoldDuration[i] = millisNow - btnPressTime[i];
         if (maxBtnHoldDuration < btnHoldDuration[i] ) {
@@ -187,7 +192,9 @@ void loop() {
     //record or not to record that is the queetsion
     if (btnsPressed > 1) { // >1 then just cycle through the buttons chosen
       autoBtnMode = 0;
-      outputListSize = btnsPressed;
+      //autoRecStep = 0;
+      outputListSize = btnsPressed-1;
+      btnsPressed = 0;
       countDown(1);
     } /*else if (buttonPresses == 1) {
       if (autoBtnMode == 2) {
@@ -200,7 +207,7 @@ void loop() {
         // the countdown has sucessfully been finnished
         // next: time to record
         // this needs to have all elements of the buttons but also only gets to be run once
-        for (int i = 0; i < 8; i++) {btnState[i] = 0; } // clear btnState for recording
+        for (int i = 0; i < 8; i++) {btnState[i] = false; } // clear btnState for recording
         millisStart = millis();
         bool whileCntrl = true; //check for while
         do {
@@ -263,10 +270,6 @@ void loop() {
         if (resetActive) {
           currentStep = -1;
           autoMode = false;
-          
-          for (int i = 0; i < 8; i++) {
-            outputList[i] = 0;
-          }
           for (int i = 0; i < 8; i++) {
             digitalWrite(stepPins[i], LOW);
           }
@@ -291,6 +294,9 @@ void loop() {
       if (swiHoldDuration >= 2000) {
         if (resetActive) {
           autoBtnMode = -1;
+          for (int i = 0; i < 64; i++) {
+            outputList[i] = 0;
+          }
         } else if (zeroActive) {
           if (autoBtnMode == 1) { autoBtnMode = 2;}
           if (autoBtnMode == 2) { autoBtnMode = 1;}      
@@ -317,7 +323,7 @@ void loop() {
               BPM -= 1;
             }
             loopTriggerBPM = 1; //this makes it go forward in auto mode .. removed now as was anoying to test.
-          } else if (loopTriggerBPM > 0 && swiHoldDuration >= 1000 + (loopTriggerBPM -1 ) * 50 ) {
+          } else if (loopTriggerBPM > 0 && swiHoldDuration >= 1000 + (loopTriggerBPM -1 ) * 25 ) {
             //change BPM based on time held ~10 for every 1 second
             if (direction == directionNow) {
               BPM += 1;
@@ -341,7 +347,7 @@ void loop() {
   //--------------------------------------------
   // ouput assimilation
   // automode
-  if (autoMode && millisNow > sequenceStepTimeNext) { //if true then next step in automode has been surpassed so lets trigger a step
+  if (btnsPressed == 0 && autoMode && millisNow > sequenceStepTimeNext) { //if true then next step in automode has been surpassed so lets trigger a step
     sequenceStepTimeStart = millis();
     if(autoBtnMode <= 1 ) { //modes that follow BPM
       // tofix: this should be in the normal auto mode check aswell as the buttonmode check, but not only this one.
@@ -369,7 +375,7 @@ void loop() {
     //digitalWrite(stepPins[currentStep], LOW);
     //to fix so it uses ouputList[] && 7 = autoRecStep
     stepTriggered = false;
-    if (autoMode && autoBtnMode >= 0 && outputListSize != 0) {
+    if (autoMode && autoBtnMode >= 0 && outputListSize != 0) { //autoMode && 
       autoRecStep +=direction;
       if (autoRecStep > outputListSize ) {
         autoRecStep = 0;
@@ -417,7 +423,7 @@ void loop() {
   /*
   //ouput given sequence steps
   for (int i = 0; i < 8; i++) {
-    if ((currentStep == i && currentStepOn == true) || btnState[i] == 1 ) {
+    if ((currentStep == i && currentStepOn == true) || btnState[i] == true ) {
       digitalWrite(stepPins[i], HIGH);
     } else {
       digitalWrite(stepPins[i], LOW);

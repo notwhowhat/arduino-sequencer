@@ -209,6 +209,8 @@ void loop() {
       autoBtnMode = 1;
       countDown(3, 1);
       autoRecStep = 0;
+      autoRecBtnTimeStart[autoRecStep] = 0; //resets state to make sure it is zero
+      autoRecDuration[autoRecStep] = 0; //resets state to make sure it is zero
       // one button is pressed, so autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! !!
       // first do countdown do da doooo dooo.. do da dooodod dooo
       // the countdown has sucessfully been finnished
@@ -224,19 +226,30 @@ void loop() {
           tmpDigitalRead = digitalRead(keyboardBtnPins[k]);
           if (tmpDigitalRead == true && btnState[k] == false ) {
             // was false last cycle and true now, so new note and new values
+            if (autoRecStep == 0 ) {
+              millisStart = millisNow;
+            }
             btnState[k] = true;
             btnPressTime[k] = millisNow;
+            
           } else if (tmpDigitalRead == false && btnState[k] == true ) {
             // opposite of last check, so the note has just finnished
             // autoRecStep gets changed every time a note has finnished, and is saved for the order
             // of the sequence
-            outputList[autoRecStep] = k;
+            if (millisNow - (autoRecBtnTimeStart[autoRecStep] + autoRecDuration[autoRecStep] ) > 25 ){ //debounce level
+              
+              outputList[autoRecStep] = k;
 
-            // subtracted by millisStart, for to get relative time values
-            autoRecBtnTimeStart[autoRecStep] = btnPressTime[k] - millisStart; // normalized to the start of the recording
-            autoRecDuration[autoRecStep] = millisNow - autoRecBtnTimeStart[autoRecStep]; // duration of press
-            autoRecStep++;
-            btnState[k] = false;
+              // subtracted by millisStart, for to get relative time values
+              autoRecBtnTimeStart[autoRecStep] = btnPressTime[k] - millisStart; // normalized to the start of the recording
+              autoRecDuration[autoRecStep] = millisNow - autoRecBtnTimeStart[autoRecStep]; // duration of press
+
+              autoRecStep++;
+              autoRecBtnTimeStart[autoRecStep] = 0; //resets state to make sure it is zero
+              autoRecDuration[autoRecStep] = 0; //resets state to make sure it is zero
+
+              btnState[k] = false;
+            }
           } else if (tmpDigitalRead == false && btnState[k] == false ) {
             // if it has been false for a while, it will remain false
             btnState[k] = false;
@@ -248,22 +261,32 @@ void loop() {
         outputPins0();
         
         if (autoRecStep > 0 ) {  //check for dead space of 5seconds, true if not > 5000 and not first time through
-          if (millisNow - (autoRecBtnTimeStart[autoRecStep-1] + autoRecDuration[autoRecStep-1]) > 5000 ) {
+          ///*
+          if (autoRecStep == 64 || millisNow - (autoRecBtnTimeStart[autoRecStep-1] + autoRecDuration[autoRecStep-1] ) > 5000 || autoRecDuration[autoRecStep] > 5000  ) {
             whileCntrl = false;
-            autoRecStep = 0;
-            outputListSize = autoRecStep;
+          }
+            // the duration of the last press
+          //*/
+          /*if (millisNow - (autoRecBtnTimeStart[autoRecStep-1] + autoRecDuration[autoRecStep-1]) > 5000 ) {
+            whileCntrl = false;
           }
           if (autoRecDuration[autoRecStep] > 5000 ) {
             // the duration of the last press
             whileCntrl = false;
-            autoRecStep = 0;
-            outputListSize = autoRecStep;
           }
+          
+          if (autoRecStep == 64){ whileCntrl = false;} //so we do not overfill the registers!!
+          */
         } else { whileCntrl = true; }
 
       } while (whileCntrl ) ; // set to check if last note was 5 seconds long, if so done!
       //countdown(); // marker: the countdown and recording ends here
-      countDown(2, 0.5);
+      countDown(4, 0.25);  //info flash
+      outputListSize = autoRecStep-1;
+      autoRecStep = 0;
+      
+      sequenceStepTimeStart = millisNow;
+      sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;//*1000;
     }
     autoRecStart = false;
     //*/
@@ -315,9 +338,12 @@ void loop() {
           for (int i = 0; i < 64; i++) {
             outputList[i] = 0;
           }
+          countDown(4, 0.25);  //info flash
         } else if (zeroActive) {
+          if (autoBtnMode == 0) { autoBtnMode = 1;} 
           if (autoBtnMode == 1) { autoBtnMode = 2;}
-          if (autoBtnMode == 2) { autoBtnMode = 1;}      
+          if (autoBtnMode == 2) { autoBtnMode = 0;}
+          countDown(4, 0.25);  //info flash
         }
       }
       

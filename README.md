@@ -1,3 +1,5 @@
+# arduino-sequencer
+our modular cv step sequencer
 ![alt text](https://github.com/notwhowhat/arduino-sequencer/blob/main/collaterals/sequecer%208bit%20arduino%20atmega3281.png)
 arduino 8 bit sequencer based originally on lookmumnocomputers design and build instructions here  https://www.lookmumnocomputer.com/sequencer-keyboard/
 improvements by JakobG and PG using atmega328 base chip and includes the following main changes:

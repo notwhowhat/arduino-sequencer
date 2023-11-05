@@ -21,7 +21,7 @@ bool btnState[] = {false,false,false,false,false,false,false,false};
 //int autoArpeggiator[8];
 int autoBtnMode = 0; //0 = including buttons/steps that the user presses @BPM, 1 = output record mode order of presses @BPM, 2 = ouput record mode order of presses, holds and spaces
 //int autoRecordingStep = 0; // in autoBtnMode 1 or 2 used to track which step we are at for output.
-int autoRecStep = 0; // in autoBtnMode 0, 1 or 2 used to track which step we are at for output.
+int outputListStep = 0; // in autoBtnMode 0, 1 or 2 used to track which step we are at for output.
 //int currentAutoRecStep = 0; // in autoBtnMode for determining which step one is in
 
 
@@ -194,23 +194,23 @@ void loop() {
     //record or not to record that is the queetsion
     if (btnsPressed > 1) { // >1 then just cycle through the buttons chosen
       autoBtnMode = 0;
-      autoRecStep = -1;
+      outputListStep = -1;
       outputListSize = btnsPressed-1;
       btnsPressed = 0;
       countDown(3, 0.33);
     }else if (btnsPressed == 1) {
-      if (autoBtnMode == 2) {
-        autoBtnMode = 2;
-      } else {autoBtnMode = 1;}
+      if (autoBtnMode != 2) {
+        autoBtnMode = 1;
+      } else {autoBtnMode = 2;}
       
       //if (autoBtnMode == 2) {
-      //  autoBtnMode = 2;
+      //autoBtnMode = 2;
       //} else {autoBtnMode = 1;}
-      autoBtnMode = 1;
+      //autoBtnMode = 1;
       countDown(3, 1);
-      autoRecStep = 0;
-      autoRecBtnTimeStart[autoRecStep] = 0; //resets state to make sure it is zero
-      autoRecDuration[autoRecStep] = 0; //resets state to make sure it is zero
+      outputListStep = 0;
+      autoRecBtnTimeStart[outputListStep] = 0; //resets state to make sure it is zero
+      autoRecDuration[outputListStep] = 0; //resets state to make sure it is zero
       // one button is pressed, so autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! !!
       // first do countdown do da doooo dooo.. do da dooodod dooo
       // the countdown has sucessfully been finnished
@@ -226,7 +226,7 @@ void loop() {
           tmpDigitalRead = digitalRead(keyboardBtnPins[k]);
           if (tmpDigitalRead == true && btnState[k] == false ) {
             // was false last cycle and true now, so new note and new values
-            if (autoRecStep == 0 ) {
+            if (outputListStep == 0 ) {
               millisStart = millisNow;
             }
             btnState[k] = true;
@@ -234,36 +234,39 @@ void loop() {
             
           } else if (tmpDigitalRead == false && btnState[k] == true ) {
             // opposite of last check, so the note has just finnished
-            // autoRecStep gets changed every time a note has finnished, and is saved for the order
+            // outputListStep gets changed every time a note has finnished, and is saved for the order
             // of the sequence
-            if (millisNow - (autoRecBtnTimeStart[autoRecStep] + autoRecDuration[autoRecStep] ) > 25 ){ //debounce level
+            if (millisNow - (autoRecBtnTimeStart[outputListStep] + autoRecDuration[outputListStep] ) > 25 ){ //debounce level
               
-              outputList[autoRecStep] = k;
+              outputList[outputListStep] = k;
 
               // subtracted by millisStart, for to get relative time values
-              autoRecBtnTimeStart[autoRecStep] = btnPressTime[k] - millisStart; // normalized to the start of the recording
-              autoRecDuration[autoRecStep] = millisNow - autoRecBtnTimeStart[autoRecStep]; // duration of press
+              autoRecBtnTimeStart[outputListStep] = btnPressTime[k] - millisStart; // normalized to the start of the recording
+              autoRecDuration[outputListStep] = millisNow - autoRecBtnTimeStart[outputListStep]; // duration of press
 
-              autoRecStep++;
-              autoRecBtnTimeStart[autoRecStep] = 0; //resets state to make sure it is zero
-              autoRecDuration[autoRecStep] = 0; //resets state to make sure it is zero
+              outputListStep++;
+              autoRecBtnTimeStart[outputListStep] = 0; //resets state to make sure it is zero
+              autoRecDuration[outputListStep] = 0; //resets state to make sure it is zero
 
               btnState[k] = false;
             }
           } else if (tmpDigitalRead == false && btnState[k] == false ) {
             // if it has been false for a while, it will remain false
             btnState[k] = false;
-          } else if (tmpDigitalRead == false && btnState[k] == false ) {
-            autoRecDuration[autoRecStep] = millisNow - autoRecBtnTimeStart[autoRecStep]; // duration of press
+          } 
+          /*
+          else if (tmpDigitalRead == false && btnState[k] == false ) {
+            autoRecDuration[outputListStep] = millisNow - autoRecBtnTimeStart[outputListStep]; // duration of press
           }
+          */
         }
         // show the pressed button (should be just one :) .. what if it isn't :S )
         outputPins0();
         
-        if (autoRecStep > 0 ) {  
+        if (outputListStep > 0 ) {  
           //not first time through then check for too many steps, dead space or long hold of 5000ms (5s) 
           
-          if (autoRecStep >= 64 || millisNow - (autoRecBtnTimeStart[autoRecStep-1] + autoRecDuration[autoRecStep-1] ) > 5000 || autoRecDuration[autoRecStep] > 5000  ) {
+          if (outputListStep >= 64 || millisNow - (autoRecBtnTimeStart[outputListStep-1] + autoRecDuration[outputListStep-1] ) > 5000 || autoRecDuration[outputListStep] > 5000  ) {
             whileCntrl = false;
           }
            
@@ -272,8 +275,8 @@ void loop() {
       } while (whileCntrl ) ; // set to check if last note was 5 seconds long, if so done!
       
       countDown(4, 0.25);  //info flash
-      outputListSize = autoRecStep-1;
-      autoRecStep = 0;
+      outputListSize = outputListStep-1;
+      outputListStep = 0;
 
       //-----> autoBtnMode startup --> should be a function .. to use in places this is found
       //vvvv function basics?? including different options found in output management
@@ -333,11 +336,12 @@ void loop() {
           }
           countDown(4, 0.25);  //info flash
         } else if (zeroActive) {
-          if (autoBtnMode == 0) { autoBtnMode = 1; } 
+          //if (autoBtnMode == 0) { autoBtnMode = 1; } 
           if (autoBtnMode == 1) { autoBtnMode = 2; } 
-          if (autoBtnMode == 2) { autoBtnMode = 0; }
+          if (autoBtnMode == 2) { autoBtnMode = 1; }
           countDown(4, 0.25);  //info flash
-          countDown(autoBtnMode+1, 1);
+          delay(100);
+          countDown(autoBtnMode, 2);
           //-----> autoBtnMode startup --> should be a function .. to use in places this is found
         }
       }
@@ -396,34 +400,35 @@ void loop() {
     } else if (autoBtnMode == 2) { //mode that follows recorded input
       //here it will need to follow the lists provided to know when to start 
       //sequenceStepTimeStart = millis();
-      autoRecStep +=1;
-      sequenceStepTimeNext = sequenceStepTimeStart + autoRecBtnTimeStart[autoRecStep]; 
+      //outputListStep += direction;
+      sequenceStepTimeNext = sequenceStepTimeStart + (autoRecBtnTimeStart[outputListStep+1]- autoRecBtnTimeStart[outputListStep]); 
       stepTriggered = true;
-      //check if autoRecStep is above number of steps if so then startover.
+      //check if outputListStep is above number of steps if so then startover.
       //!!! need to fix output, clear all ouput
       //clear all output except output button
       //then
-      //~~~~>?? currentStep = autoRecordingBtn[autoRecStep];
-    } else {
-      // normal basic autoMode
+      //~~~~>?? currentStep = autoRecordingBtn[outputListStep];
+    } 
+    /*else { // normal basic autoMode
       sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;//60/BPM*1000;
       stepTriggered = true;
     }
+    */
   }
 
   //find next step if triggered via forward or reverse or via auotmode
   if (stepTriggered == true) {
     //digitalWrite(stepPins[currentStep], LOW);
-    //to fix so it uses ouputList[] && 7 = autoRecStep
+    //to fix so it uses ouputList[] && 7 = outputListStep
     stepTriggered = false;
     if (autoBtnMode >= 0 && outputListSize != 0) { //autoMode && 
-      autoRecStep += direction;
-      if (autoRecStep > outputListSize ) {
-        autoRecStep = 0;
-      } else if (autoRecStep < 0 ) {
-        autoRecStep = outputListSize;
+      outputListStep += direction;
+      if (outputListStep > outputListSize ) {
+        outputListStep = 0;
+      } else if (outputListStep < 0 ) {
+        outputListStep = outputListSize;
       }
-      currentStep = outputList[autoRecStep];
+      currentStep = outputList[outputListStep];
     } else {
       currentStep += direction;
       if (currentStep > 7 ) {
@@ -456,7 +461,7 @@ void loop() {
   outputPins0();
   /*
   if (autoBtnMode==0) {
-    outputPins(autoRecStep);
+    outputPins(outputListStep);
   } else {
     outputPins(8);
   }

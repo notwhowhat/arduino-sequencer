@@ -274,9 +274,12 @@ void loop() {
       countDown(4, 0.25);  //info flash
       outputListSize = autoRecStep-1;
       autoRecStep = 0;
-      
+
+      //-----> autoBtnMode startup --> should be a function .. to use in places this is found
+      //vvvv function basics?? including different options found in output management
+      millisNow = millis(); 
       sequenceStepTimeStart = millisNow;
-      sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;//*1000;
+      sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;//*1000;  //THIS NEED TO BE MODIFIED FOR TYPE OF autoBrnMode!!!
     }
     //autoRecStart = false;
     //*/
@@ -330,10 +333,12 @@ void loop() {
           }
           countDown(4, 0.25);  //info flash
         } else if (zeroActive) {
-          if (autoBtnMode == 0) { autoBtnMode = 1;} 
-          if (autoBtnMode == 1) { autoBtnMode = 2;}
-          if (autoBtnMode == 2) { autoBtnMode = 0;}
+          if (autoBtnMode == 0) { autoBtnMode = 1; } 
+          if (autoBtnMode == 1) { autoBtnMode = 2; } 
+          if (autoBtnMode == 2) { autoBtnMode = 0; }
           countDown(4, 0.25);  //info flash
+          countDown(autoBtnMode+1, 1);
+          //-----> autoBtnMode startup --> should be a function .. to use in places this is found
         }
       }
       
@@ -379,6 +384,7 @@ void loop() {
   }
 
   //--------------------------------------------
+  //NOTE: below ot integrate?? //-----> autoBtnMode startup --> should be a function .. to use in places this is found
   // ouput assimilation
   // automode
   if (btnsPressed == 0 && autoMode && millisNow > sequenceStepTimeNext) { //if true then next step in automode has been surpassed so lets trigger a step
@@ -389,9 +395,9 @@ void loop() {
       stepTriggered = true;
     } else if (autoBtnMode == 2) { //mode that follows recorded input
       //here it will need to follow the lists provided to know when to start 
-      sequenceStepTimeStart = millis();
-      sequenceStepTimeNext = sequenceStepTimeStart + btnPressTime[autoRecStep]; 
+      //sequenceStepTimeStart = millis();
       autoRecStep +=1;
+      sequenceStepTimeNext = sequenceStepTimeStart + autoRecBtnTimeStart[autoRecStep]; 
       stepTriggered = true;
       //check if autoRecStep is above number of steps if so then startover.
       //!!! need to fix output, clear all ouput

@@ -3,7 +3,7 @@
 
 ![alt text](https://github.com/notwhowhat/arduino-sequencer/blob/main/collaterals/sequencer%208bit%20arduino%20atmega3281.png)
 arduino 8 bit sequencer based originally on lookmumnocomputers design and build instructions here  https://www.lookmumnocomputer.com/sequencer-keyboard/
-improvements by JakobG and PG using atmega328 base chip and includes the following main changes:
+improvements by notwhowhat and ptryk using instead an alternative layout and an atmega328p chip as base and includes the following main changes:
 complete new code with millis-ification to allow for some spify autoMode sequencing!! in 3 autoModes!
 
 ### functions:

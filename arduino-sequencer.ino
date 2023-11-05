@@ -198,7 +198,7 @@ void loop() {
       outputListSize = btnsPressed-1;
       btnsPressed = 0;
       countDown(3, 0.33);
-    } else if (btnsPressed == 1) {
+    }else if (btnsPressed == 1) {
       if (autoBtnMode == 2) {
         autoBtnMode = 2;
       } else {autoBtnMode = 1;}
@@ -209,13 +209,14 @@ void loop() {
       autoBtnMode = 1;
       countDown(3, 1);
       autoRecStep = 0;
-      // more than one buttons are pressed, so autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! !!
+      // one button is pressed, so autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! !!
       // first do countdown do da doooo dooo.. do da dooodod dooo
       // the countdown has sucessfully been finnished
       // next: time to record
       // this needs to have all elements of the buttons but also only gets to be run once
       for (int i = 0; i < 8; i++) {btnState[i] = false; } // clear btnState for recording
       unsigned long millisStart = millis();
+      currentStep = -1;
       bool whileCntrl = true; //check for while
       do {
         millisNow = millis(); 
@@ -260,7 +261,7 @@ void loop() {
 
       } while (whileCntrl ) ; // set to check if last note was 5 seconds long, if so done!
       //countdown(); // marker: the countdown and recording ends here
-      countDown(1, 1);
+      countDown(2, 0.5);
     }
     autoRecStart = false;
     //*/

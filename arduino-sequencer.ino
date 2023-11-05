@@ -233,20 +233,22 @@ void loop() {
             outputList[autoRecStep] = k;
 
             // subtracted by millisStart, for to get relative time values
-            autoRecBtnTimeStart[autoRecStep] = btnPressTime[k] - millisStart; // the start of the press was recorded before
+            autoRecBtnTimeStart[autoRecStep] = btnPressTime[k] - millisStart; // normalized to the start of the recording
             autoRecDuration[autoRecStep] = millisNow - autoRecBtnTimeStart[autoRecStep]; // duration of press
             autoRecStep++;
             btnState[k] = false;
           } else if (tmpDigitalRead == false && btnState[k] == false ) {
             // if it has been false for a while, it will remain false
             btnState[k] = false;
+          } else if (tmpDigitalRead == false && btnState[k] == false ) {
+            autoRecDuration[autoRecStep] = millisNow - autoRecBtnTimeStart[autoRecStep]; // duration of press
           }
         }
         // show the pressed button (should be just one :) .. what if it isn't :S )
         outputPins0();
         
         if (autoRecStep > 0 ) {  //check for dead space of 5seconds, true if not > 5000 and not first time through
-          if (millisNow - (autoRecBtnTimeStart[autoRecStep] - autoRecDuration[autoRecStep]) > 5000 ) {
+          if (millisNow - (autoRecBtnTimeStart[autoRecStep-1] + autoRecDuration[autoRecStep-1]) > 5000 ) {
             whileCntrl = false;
             autoRecStep = 0;
             outputListSize = autoRecStep;

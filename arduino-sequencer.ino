@@ -22,7 +22,7 @@ bool btnState[] = {false,false,false,false,false,false,false,false};
 int autoBtnMode = 0; //0 = including buttons/steps that the user presses @BPM, 1 = output record mode order of presses @BPM, 2 = ouput record mode order of presses, holds and spaces
 //int autoRecordingStep = 0; // in autoBtnMode 1 or 2 used to track which step we are at for output.
 int autoRecStep = 0; // in autoBtnMode 0, 1 or 2 used to track which step we are at for output.
-int currentAutoRecStep = 0; // in autoBtnMode for determining which step one is in
+//int currentAutoRecStep = 0; // in autoBtnMode for determining which step one is in
 
 
 //define variables (for BPM and millis)
@@ -33,9 +33,9 @@ bool autoMode = false; //if true then in sequence program mode where sequence wi
 int loopTriggerBPM = 0; //if 1 or above then loop in BPM setting has been triggered, 0 if not triggered
 bool tmpDigitalRead = false; // low = false high = true for tmp button
 
-// for recording the notes. 64 steps max len
-bool autoRecStart = false;
-int outputList[64];
+
+//bool autoRecStart = false;
+int outputList[64]; // for recording the notes. 64 steps max len
 int outputListSize = 0; // size of the outputList
 unsigned long autoRecBtnTimeStart[64];
 unsigned long autoRecDuration[64];
@@ -260,27 +260,17 @@ void loop() {
         // show the pressed button (should be just one :) .. what if it isn't :S )
         outputPins0();
         
-        if (autoRecStep > 0 ) {  //check for dead space of 5seconds, true if not > 5000 and not first time through
-          ///*
-          if (autoRecStep == 64 || millisNow - (autoRecBtnTimeStart[autoRecStep-1] + autoRecDuration[autoRecStep-1] ) > 5000 || autoRecDuration[autoRecStep] > 5000  ) {
-            whileCntrl = false;
-          }
-            // the duration of the last press
-          //*/
-          /*if (millisNow - (autoRecBtnTimeStart[autoRecStep-1] + autoRecDuration[autoRecStep-1]) > 5000 ) {
-            whileCntrl = false;
-          }
-          if (autoRecDuration[autoRecStep] > 5000 ) {
-            // the duration of the last press
-            whileCntrl = false;
-          }
+        if (autoRecStep > 0 ) {  
+          //not first time through then check for too many steps, dead space or long hold of 5000ms (5s) 
           
-          if (autoRecStep == 64){ whileCntrl = false;} //so we do not overfill the registers!!
-          */
+          if (autoRecStep >= 64 || millisNow - (autoRecBtnTimeStart[autoRecStep-1] + autoRecDuration[autoRecStep-1] ) > 5000 || autoRecDuration[autoRecStep] > 5000  ) {
+            whileCntrl = false;
+          }
+           
         } else { whileCntrl = true; }
 
       } while (whileCntrl ) ; // set to check if last note was 5 seconds long, if so done!
-      //countdown(); // marker: the countdown and recording ends here
+      
       countDown(4, 0.25);  //info flash
       outputListSize = autoRecStep-1;
       autoRecStep = 0;
@@ -288,7 +278,7 @@ void loop() {
       sequenceStepTimeStart = millisNow;
       sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;//*1000;
     }
-    autoRecStart = false;
+    //autoRecStart = false;
     //*/
       
   } 
@@ -402,6 +392,7 @@ void loop() {
       sequenceStepTimeStart = millis();
       sequenceStepTimeNext = sequenceStepTimeStart + btnPressTime[autoRecStep]; 
       autoRecStep +=1;
+      stepTriggered = true;
       //check if autoRecStep is above number of steps if so then startover.
       //!!! need to fix output, clear all ouput
       //clear all output except output button

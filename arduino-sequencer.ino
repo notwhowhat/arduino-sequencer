@@ -60,7 +60,7 @@ int outputListStep = 0; // in autoBtnMode 0, 1 or 2 used to track which step we 
 
 //define variables (for BPM and millis)
 int BPM = 80;
-unsigned long timeFactor = 100;
+float timeFactor = 1.00f;
 //int BPMnow = BPM;
 bool stepTriggered = false; //true if a step has been triggered but not yet solved
 bool autoMode = false; //if true then in sequence program mode where sequence will proceed at BPM or according to autoBtnMode
@@ -396,20 +396,20 @@ void loop() {
             //change BPM by 1 in direction
             if (direction == directionNow) {
               //BPM += 1;
-              if (autoBtnMode == 2) {timeFactor += 1; } else {BPM += 1; }
+              if (autoBtnMode == 2) {timeFactor += 1.0F/100; } else {BPM += 1; }
             } else {
               //BPM -= 1;
-              if (autoBtnMode == 2) {timeFactor -= 1; } else {BPM -= 1; }
+              if (autoBtnMode == 2) {timeFactor -= 1.0F/100; } else {BPM -= 1; }
             }
             loopTriggerBPM = 1; //this makes it go forward in auto mode .. removed now as was anoying to test.
           } else if (loopTriggerBPM > 0 && swiHoldDuration >= 1000 + (loopTriggerBPM -1 ) * 25 ) {
             //change BPM based on time held ~20 for every 1 second
             if (direction == directionNow) {
               //BPM += 1;
-              if (autoBtnMode == 2) {timeFactor += 1; } else {BPM += 1; }
+              if (autoBtnMode == 2) {timeFactor += 1.0F/100; } else {BPM += 1; }
             } else {
               //BPM -= 1;
-              if (autoBtnMode == 2) {timeFactor -= 1; } else {BPM -= 1; }
+              if (autoBtnMode == 2) {timeFactor -= 1.0F/100; if (timeFactor < 1.0F/100){timeFactor =1.0F/100;}} else {BPM -= 1; }
             }
             loopTriggerBPM += 1;
           }
@@ -441,7 +441,7 @@ void loop() {
       //outputListStep += direction;
       int nxtOutputListStep = outputListStep+1;
       if(nxtOutputListStep > outputList) {nxtOutputListStep = 0; } else if (nxtOutputListStep < 0 ) {nxtOutputListStep =outputListSize;}
-      sequenceStepTimeNext = sequenceStepTimeStart + ((autoRecBtnTimeStart[nxtOutputListStep]- autoRecBtnTimeStart[outputListStep]) * timeFactor/100); 
+      sequenceStepTimeNext = sequenceStepTimeStart + 1L * (timeFactor * (autoRecBtnTimeStart[nxtOutputListStep]- autoRecBtnTimeStart[outputListStep])); 
       stepTriggered = true;
       //check if outputListStep is above number of steps if so then startover.
       //!!! need to fix output, clear all ouput

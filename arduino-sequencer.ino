@@ -7,32 +7,9 @@ arduino 8 bit sequencer based originally on lookmumnocomputers design and build 
 improvements by notwhowhat and ptryk using instead an alternative layout and an atmega328p chip as base and includes the following main changes:
 complete new code with millis-ification to allow for some spify autoMode sequencing!! in 3 autoModes!
 
-### functions:
-while very base functionality is accessible directly via signals in /out there are more advanced faetures available via pressing buttons, switches or turning the pots.. but there are a number of special features as well 
--  base mode (when unit is powered ) - will run lights across in forward direction.
--  push buttons - step 1 (0) on left and step 8 (7) on the right. Pressing these allows 12v signal adjusted by pots in two signals to carry on and out in to individual steps or to keyboard out. 
--  pots - turned to get right notes into the different CVs
--  forward / reverse - moves step to next step forward or reverse (in direction given, unless in autoMode recorded autoBtnModes 1 or 2, then it carries on in the direction recorded or opposite (reverse))
--  default - if held in either direction for > 1s it will go into automode. holding during automode will speed up or slow down depending on direction. one momentary hold will give +/- 1BPM, holding it >1s will then increase BPM considerably more quickly (10BPM/s)
--  automode - will proceed through the steps one at a time, proceeding from eventual button presses. >1 button pressed > 5s = autoBtnMode 0. 1 button pressed > 5s = autoBtnMode 1, gives a BPM related countdown which allows up to 64 steps of recording! this is exited by either pressing a button or not pressing anything for >5s
--  reset - momentary = exits automode and puts unit hidden step = 0 (-1). held > 2s = as well as momentary functions it clears all modes to base mode (saving BPM and which autoBtnMode) 
--  zero - momenttary = sequence goes back to zero. held > 2s = switches autoBtnMode btween 1 and 2 which is singnaled by the same number of long flashes after some quick flashes.
--  autoBtnMode 0 - proceed through all steps according to BPM, pressing a button will result in the sequence proceedign from the butotn pressed
--  autoBtnMode 1 - proceeds through sequence recorded according to BPM (default when single button pressing), pressing a button impacts the sequence
--  autoBtnMode 2 - proceeds through sequence recorded according to when buttons were pressed in time, pressing a button impacts the sequence
-
-### electonics notes
-  serial interface - used to program the unit and is connected with button facing you and the mini usb down the dupont connectors with metal up are inserted to the main connector from left to right ground(black)-space-power(red)-yellow-orange-white. 
-  serial interface switch - connected according to the colors yellow to yellow, white to white and orange to orange.
-
-TODO
-- [ ] ? - adjust speed of autoBtnMode 2 (recording with spaces) with forward and reverse
-- [ ] ? - fix autoBtnMode 2 to include dead space - autoBtnMode 3??
-- [ ] ? - remove dead code
-- [ ] ? - organize variables a bit better
-- [ ] ? - improve comments for build for fixing later (eg how to connect serial interface (with botton on top dupont pins show .. power / gnd to left 3 pins and others to the right) and quick button (needed to swtich beteween program and funcitonal mode quickly = use colors))
-- [ ] ? - +/-12v input test .. today running directly off of 5v source voltage via USB red(power) and black(ground) (NOT coming from ardunio with a space between) should allow for 6-12v function.
-*/
+see README.md for loads of info instructions and todo
+https://github.com/notwhowhat/arduino-sequencer/blob/4ee584a79ed4d488f3fb350778e013a050389698/README.md
+-------------------------------------------- */
 int forwardSwiPin = 8; //sets direction forward
 int reverseSwiPin = 0; //sets direction reverse
 int resetSwiPin = 18; //resets unit sequence state at -1 (not visible)
@@ -49,14 +26,9 @@ int currentStep = 0; //which step is current 0 is not visible while 1-8 are show
 bool currentStepOn = false; //tells if current step should be on = true or off = false
 int direction = 0; //direction sequence or step will go : 1 for forward, -1 for reverse, 0 for current step
 int directionNow = 1; //direction now chosen : 1 = forward, -1 = reverse
+
 int swiState = 0; // 0 = steady state (off/LOW), this is used to make sure we do not count 1 press as multiples by checking for release
 bool btnState[] = {false,false,false,false,false,false,false,false};
-//int autoArpeggiator[8];
-int autoBtnMode = 0; //0 = including buttons/steps that the user presses @BPM, 1 = output record mode order of presses @BPM, 2 = ouput record mode order of presses, holds and spaces
-//int autoRecordingStep = 0; // in autoBtnMode 1 or 2 used to track which step we are at for output.
-int outputListStep = 0; // in autoBtnMode 0, 1 or 2 used to track which step we are at for output.
-//int currentAutoRecStep = 0; // in autoBtnMode for determining which step one is in
-
 
 //define variables (for BPM and millis)
 int BPM = 80;
@@ -67,15 +39,15 @@ bool autoMode = false; //if true then in sequence program mode where sequence wi
 int loopTriggerBPM = 0; //if 1 or above then loop in BPM setting has been triggered, 0 if not triggered
 bool tmpDigitalRead = false; // low = false high = true for tmp button
 
-
-//bool autoRecStart = false;
+//autoBtnMode related
+int autoBtnMode = 0; //0 = including buttons/steps that the user presses @BPM, 1 = output record mode order of presses @BPM, 2 = ouput record mode order of presses, holds and spaces
+int outputListStep = 0; // in autoBtnMode 0, 1 or 2 used to track which step we are at for output.
 int outputList[64]; // for recording the notes. 64 steps max len
 int outputListSize = 0; // size of the outputList
 unsigned long autoRecBtnTimeStart[64];
 unsigned long autoRecDuration[64];
 
-//bool inZeroMode = false;
-//unsigned long sequenceStepTime = 0;
+//millis related
 unsigned long millisNow = millis();
 unsigned long millisStart = millisNow; // used to normalize the millis in recording :)
 unsigned long sequenceStepTimeStart = millisNow;
@@ -85,6 +57,9 @@ unsigned long swiHoldDuration = 0; // difference for comparision between times, 
 unsigned long btnPressTime[] = {0,0,0,0,0,0,0,0}; //millis when pressed
 unsigned long btnHoldDuration[] = {0,0,0,0,0,0,0,0}; // difference for comparision between times, eg = millis() - swiPressTime;
 
+
+// --------------------------------------------
+// setup pins for arduino -run 1x
 void setup() {
   // basic setup.
   for (int i = 0; i < 8; i++) {
@@ -99,7 +74,9 @@ void setup() {
   startTest();
 }
 
-//ouput !!
+
+// --------------------------------------------
+// ouput
 void outputPins0(){//int currentStep, bool currentStepOn, bool btnState[] ) {
   //ouput given sequence steps
   for (int i = 0; i < 8; i++) {
@@ -111,18 +88,9 @@ void outputPins0(){//int currentStep, bool currentStepOn, bool btnState[] ) {
   }
 }
 
-void outputPins(int steps){//int currentStep, bool currentStepOn, bool btnState[] ) {
-  //ouput given sequence steps
-  for (int i = 0; i < steps; i++) {
-    if ((currentStep == i && currentStepOn == true) || btnState[i] == true ) {
-      digitalWrite(stepPins[outputList[i]], HIGH);
-    } else {
-      digitalWrite(stepPins[outputList[i]], LOW);
-    }
-  }
-}
 
-//startup test of system 
+// --------------------------------------------
+// startup test of system 
 void startTest( ) {
   //ouput given sequence steps
  for (int j = 0; j <= 10; j++) { 
@@ -138,25 +106,10 @@ void startTest( ) {
   }
 }
 
-//count down pre recording to record button presses
-bool countDown(int loops, float BPMfactor) {
-  /*
-  if (countdownTime + (60000 / BPM * 6) > millis()) {
-    // start flashing
-    for (int j = 0; j < 8; j++) {
-      digitalWrite(stepPins[j], HIGH);                  
-    }
-    delay((60000 / BPM)); // one beat
-    for (int j = 0; j < 8; j++) {
-      digitalWrite(stepPins[j], LOW);                  
-    }                
-    delay((60000 / BPM)); // one beat         
-    // show that it has been sucsessfully done
-    return true;
-  }
-  return false;
-  */
 
+// --------------------------------------------
+// count down pre recording to record button presses
+bool countDown(int loops, float BPMfactor) {
   for (int i = 0; i < loops; i++) {
     // start flashing
     for (int j = 0; j < 8; j++) {
@@ -172,10 +125,10 @@ bool countDown(int loops, float BPMfactor) {
   return true;
 }
 
-/*--------------------------------------------
-main loop()!!!
 
---------------------------------------------*/
+/* --------------------------------------------
+main loop()!!!
+-------------------------------------------- */
 void loop() {
   millisNow = millis();
   // keyboard button press check
@@ -200,8 +153,9 @@ void loop() {
   }
   if (btnsPressed==0 && !autoMode){currentStepOn = false;}
 
-  //--------------------------------------------
-  //--- button processing
+
+  // --------------------------------------------
+  // button processing
   int maxBtnHoldDuration = 0; //initilization to follow the maximum time the buttons are held as it loops through teh folloiwng loop
 
   if(autoMode) {
@@ -222,9 +176,13 @@ void loop() {
     }
   }
   
+  // --------------------------------------------
+  // autoBtnModes 
   if (maxBtnHoldDuration >= 5000 ) {
-    //NOTE NEED TO LOCK THIS AFTER FIRST RUN!!!! , setting maxBtnHoldDuration=0 should do it!
-    maxBtnHoldDuration = 0;
+    maxBtnHoldDuration = 0; //NOTE NEED TO LOCK THIS LOOP AFTER FIRST RUN UNTIL IT IS DONE!!!! , setting maxBtnHoldDuration=0 should do it!
+    
+    // --------------------------------------------
+    // autoBtnMode 0 (multipress)
     //record or not to record that is the queetsion
     if (btnsPressed > 1) { // >1 then just cycle through the buttons chosen
       autoBtnMode = 0;
@@ -232,24 +190,27 @@ void loop() {
       outputListSize = btnsPressed-1;
       btnsPressed = 0;
       countDown(4, 0.25);  //info flash
-    }else if (btnsPressed == 1) {
+    }
+
+    // --------------------------------------------
+    // autoBtnMode 1 & 2 (single press)
+    // one button is pressed, so autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! !!
+    // first do countdown do da doooo dooo.. do da dooodod dooo
+    // the countdown has sucessfully been finnished
+    // next: time to record
+    // this needs to have all elements of the buttons but also only gets to be run once
+    else if (btnsPressed == 1) {
       if (autoBtnMode != 2) {
         autoBtnMode = 1;
       } else {autoBtnMode = 2;}
       
-      //if (autoBtnMode == 2) {
-      //autoBtnMode = 2;
-      //} else {autoBtnMode = 1;}
-      //autoBtnMode = 1;
       countDown(4, 1);
       outputListStep = 0;
       autoRecBtnTimeStart[outputListStep] = 0; //resets state to make sure it is zero
       autoRecDuration[outputListStep] = 0; //resets state to make sure it is zero
-      // one button is pressed, so autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! , autoBtnMode 1 or 2 time! !!
-      // first do countdown do da doooo dooo.. do da dooodod dooo
-      // the countdown has sucessfully been finnished
-      // next: time to record
-      // this needs to have all elements of the buttons but also only gets to be run once
+
+      // --------------------------------------------
+      // initilization and then recording autoBtnMode 1 & 2
       for (int i = 0; i < 8; i++) {btnState[i] = false; } // clear btnState for recording
       unsigned long millisStart = millis();
       currentStep = -1;
@@ -288,11 +249,6 @@ void loop() {
             // if it has been false for a while, it will remain false
             btnState[k] = false;
           } 
-          /*
-          else if (tmpDigitalRead == false && btnState[k] == false ) {
-            autoRecDuration[outputListStep] = millisNow - autoRecBtnTimeStart[outputListStep]; // duration of press
-          }
-          */
         }
         // show the pressed button (should be just one :) .. what if it isn't :S )
         outputPins0();
@@ -318,15 +274,10 @@ void loop() {
       sequenceStepTimeStart = millisNow;
       sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;//*1000;  //THIS NEED TO BE MODIFIED FOR TYPE OF autoBrnMode!!!
     }
-    //autoRecStart = false;
-    //*/
-      
   } 
   
 
-
-
-  //--------------------------------------------
+  // --------------------------------------------
   // switch press check
   resetActive = digitalRead(resetSwiPin);
   zeroActive = digitalRead(zeroSwiPin);
@@ -380,7 +331,9 @@ void loop() {
         }
       }
       
-      
+
+      // --------------------------------------------
+      // switch processing
       if (forwardActive || reverseActive) {
         if (!autoMode ) { 
           currentStepOn = true;
@@ -425,7 +378,9 @@ void loop() {
     if (!autoMode){ currentStepOn = false;}
   }
 
-  //--------------------------------------------
+
+  // --------------------------------------------
+  // automodes
   //NOTE: below ot integrate?? //-----> autoBtnMode startup --> should be a function .. to use in places this is found
   // ouput assimilation
   // automode
@@ -443,11 +398,6 @@ void loop() {
       if(nxtOutputListStep > outputList) {nxtOutputListStep = 0; } else if (nxtOutputListStep < 0 ) {nxtOutputListStep =outputListSize;}
       sequenceStepTimeNext = sequenceStepTimeStart + 1L * (timeFactor * (autoRecBtnTimeStart[nxtOutputListStep]- autoRecBtnTimeStart[outputListStep])); 
       stepTriggered = true;
-      //check if outputListStep is above number of steps if so then startover.
-      //!!! need to fix output, clear all ouput
-      //clear all output except output button
-      //then
-      //~~~~>?? currentStep = autoRecordingBtn[outputListStep];
     } 
     /*else { // normal basic autoMode
       sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;//60/BPM*1000;
@@ -456,6 +406,9 @@ void loop() {
     */
   }
 
+
+  // --------------------------------------------
+  // triggered step processing
   //find next step if triggered via forward or reverse or via auotmode
   if (stepTriggered == true) {
     //digitalWrite(stepPins[currentStep], LOW);
@@ -477,43 +430,10 @@ void loop() {
         currentStep = 7;
       }
     }
-    //digitalWrite(stepPins[currentStep], HIGH);
   }
   
-  
-  /*
-  } else if (!autoMode) {
-    if (direction == 1) {
-      if (currentStep == 7) {
-        currentStep = 0;
-      } else {
-        currentStep += 1;
-      }
-    } else if (direction == -1){
-      if (currentStep <= 0) {
-        currentStep = 7;
-      } else {
-        currentStep -= 1;
-      }
-    }  
-  }
-  */
+
+  // --------------------------------------------
+  // ouput
   outputPins0();
-  /*
-  if (autoBtnMode==0) {
-    outputPins(outputListStep);
-  } else {
-    outputPins(8);
-  }
-  */
-  /*
-  //ouput given sequence steps
-  for (int i = 0; i < 8; i++) {
-    if ((currentStep == i && currentStepOn == true) || btnState[i] == true ) {
-      digitalWrite(stepPins[i], HIGH);
-    } else {
-      digitalWrite(stepPins[i], LOW);
-    }
-  }
-  */
 }

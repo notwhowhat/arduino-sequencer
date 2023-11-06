@@ -155,6 +155,14 @@ void loop() {
 
 
   // --------------------------------------------
+  // switch press check
+  resetActive = digitalRead(resetSwiPin);
+  zeroActive = digitalRead(zeroSwiPin);
+  forwardActive = digitalRead(forwardSwiPin);
+  reverseActive = digitalRead(reverseSwiPin);
+  
+  
+  // --------------------------------------------
   // button processing
   int maxBtnHoldDuration = 0; //initilization to follow the maximum time the buttons are held as it loops through teh folloiwng loop
 
@@ -178,13 +186,13 @@ void loop() {
   
   // --------------------------------------------
   // autoBtnModes 
-  if (maxBtnHoldDuration >= 5000 ) {
+  if (maxBtnHoldDuration >= 5000 || (zeroActive && btnsPressed > 0 ) ) {
     maxBtnHoldDuration = 0; //NOTE NEED TO LOCK THIS LOOP AFTER FIRST RUN UNTIL IT IS DONE!!!! , setting maxBtnHoldDuration=0 should do it!
     
     // --------------------------------------------
     // autoBtnMode 0 (multipress)
     //record or not to record that is the queetsion
-    if (btnsPressed > 1) { // >1 then just cycle through the buttons chosen
+    if (btnsPressed > 1 ) { // >1 then just cycle through the buttons chosen
       autoBtnMode = 0;
       outputListStep = -1;
       outputListSize = btnsPressed-1;
@@ -199,10 +207,10 @@ void loop() {
     // the countdown has sucessfully been finnished
     // next: time to record
     // this needs to have all elements of the buttons but also only gets to be run once
-    else if (btnsPressed == 1) {
-      if (autoBtnMode != 2) {
+    else if (btnsPressed == 1 ) {
+      if (autoBtnMode != 2 ) {
         autoBtnMode = 1;
-      } else {autoBtnMode = 2;}
+      } else {autoBtnMode = 2; }
       
       countDown(4, 1);
       outputListStep = 0;
@@ -217,6 +225,7 @@ void loop() {
       bool whileCntrl = true; //check for while
       do {
         millisNow = millis(); 
+        zeroActive = digitalRead(zeroSwiPin);
         for (int k = 0; k < 8; k++) { // loops through all of the buttons for to check if they have been pressed
           tmpDigitalRead = digitalRead(keyboardBtnPins[k]);
           if (tmpDigitalRead == true && btnState[k] == false ) {
@@ -256,7 +265,7 @@ void loop() {
         if (outputListStep > 0 ) {  
           //not first time through then check for too many steps, dead space or long hold of 5000ms (5s) 
           
-          if (outputListStep >= 64 || millisNow - (autoRecBtnTimeStart[outputListStep-1] + autoRecDuration[outputListStep-1] ) > 5000 || autoRecDuration[outputListStep] > 5000  ) {
+          if (outputListStep >= 64 || millisNow - (autoRecBtnTimeStart[outputListStep-1] + autoRecDuration[outputListStep-1] ) > 5000 || autoRecDuration[outputListStep] > 5000 || zeroActive ) {
             whileCntrl = false;
           }
            
@@ -267,7 +276,7 @@ void loop() {
       countDown(4, 0.25);  //info flash
       outputListSize = outputListStep-1;
       outputListStep = 0;
-
+      zeroActive = false;
       //-----> autoBtnMode startup --> should be a function .. to use in places this is found
       //vvvv function basics?? including different options found in output management
       millisNow = millis(); 
@@ -275,15 +284,10 @@ void loop() {
       sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;//*1000;  //THIS NEED TO BE MODIFIED FOR TYPE OF autoBrnMode!!!
     }
   } 
-  
+
 
   // --------------------------------------------
-  // switch press check
-  resetActive = digitalRead(resetSwiPin);
-  zeroActive = digitalRead(zeroSwiPin);
-  forwardActive = digitalRead(forwardSwiPin);
-  reverseActive = digitalRead(reverseSwiPin);
-
+  // switch processing 
   millisNow = millis();
   if (resetActive || zeroActive || forwardActive || reverseActive ) {
     if (swiState == 0 ) {
@@ -296,10 +300,21 @@ void loop() {
             digitalWrite(stepPins[i], LOW);
           }
         } else if (zeroActive) {
-          for (int i = 0; i < 8; i++) {
-            digitalWrite(stepPins[i], LOW);
+          if (!autoMode) {
+            for (int i = 0; i < 8; i++) {
+              digitalWrite(stepPins[i], LOW);
+            }
+            currentStep = 0;
+          } else {
+            if (autoBtnMode == 0) { autoBtnMode = 0; }
+            else {
+              if (autoBtnMode == 1) { autoBtnMode = 2; } 
+              else if (autoBtnMode == 2) { autoBtnMode = 1; }
+              countDown(4, 0.25);  //info flash
+              for (int i = 0; i < autoBtnMode; i++) {delay(100); countDown(1, 2); }
+            }
           }
-          currentStep = 0;
+          
         } else if (forwardActive) {
           directionNow = 1;
           if (!autoMode) {stepTriggered=true;}
@@ -320,20 +335,20 @@ void loop() {
             outputList[i] = 0;
           }
           countDown(4, 0.25);  //info flash
-        } else if (zeroActive) {
+        } /* else if (zeroActive) {
           //if (autoBtnMode == 0) { autoBtnMode = 1; } 
           if (autoBtnMode == 1) { autoBtnMode = 2; } 
           else if (autoBtnMode == 2) { autoBtnMode = 1; }
           countDown(4, 0.25);  //info flash
-          delay(100);
-          countDown(autoBtnMode, 2);
+          for (int int i = 0; i < autoBtnMode; i++) {delay(100); countDown(1, 2); }
           //-----> autoBtnMode startup --> should be a function .. to use in places this is found
         }
+        */
       }
       
 
       // --------------------------------------------
-      // switch processing
+      // switch processing 2
       if (forwardActive || reverseActive) {
         if (!autoMode ) { 
           currentStepOn = true;

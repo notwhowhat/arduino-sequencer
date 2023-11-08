@@ -6,7 +6,7 @@ arduino 8 bit sequencer based originally on lookmumnocomputers design and build 
 improvements by notwhowhat and ptryk using instead an alternative layout and an atmega328p chip as base and includes the following main changes:
 complete new code with millis-ification to allow for some spify autoMode sequencing!! in 3 autoModes!
 
-![boop beep bop](https://github.com/notwhowhat/arduino-sequencer/blob/timingAdjust_autoBtnStep2/collaterals/20231106_215705-ANIMATION.gif)
+![boop beep bop](https://github.com/notwhowhat/arduino-sequencer/blob/main/collaterals/20231108_131604-ANIMATION.gif)
 
 
 ## functions:

@@ -409,10 +409,20 @@ void loop() {
       //here it will need to follow the lists provided to know when to start 
       //sequenceStepTimeStart = millis();
       //outputListStep += direction;
-      int nxtOutputListStep = outputListStep+1;
-      if(nxtOutputListStep > outputList) {nxtOutputListStep = 0; } else if (nxtOutputListStep < 0 ) {nxtOutputListStep =outputListSize;}
-      sequenceStepTimeNext = sequenceStepTimeStart + 1L * (timeFactor * (autoRecBtnTimeStart[nxtOutputListStep]- autoRecBtnTimeStart[outputListStep])); 
+      unsigned long TautoRecDuration = 0;
+      if (outputListStep + direction > outputListSize || outputListStep + direction < 0 ) { //forward direction - next step is after duration of current step
+        TautoRecDuration = autoRecDuration[outputListStep]; 
+      } 
+      else { TautoRecDuration = abs( autoRecBtnTimeStart[outputListStep + direction] - autoRecBtnTimeStart[outputListStep] ); }
+      sequenceStepTimeNext = sequenceStepTimeStart + 1L * (timeFactor * (TautoRecDuration ) ); 
       stepTriggered = true;
+      //if (outputListStep+1 < 0) { TautoRecDuration } //reverse direction - next step is duration of last step.
+      /*int nxtOutputListStep = outputListStep+1;
+      if(nxtOutputListStep > outputList) {nxtOutputListStep = 0; } else if (nxtOutputListStep < 0 ) {nxtOutputListStep = outputListSize;}
+      sequenceStepTimeNext = sequenceStepTimeStart + 1L * (timeFactor * (autoRecBtnTimeStart[nxtOutputListStep] - autoRecBtnTimeStart[outputListStep] ) ); 
+      stepTriggered = true;
+      */
+
     } 
     /*else { // normal basic autoMode
       sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;//60/BPM*1000;

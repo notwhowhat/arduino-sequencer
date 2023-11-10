@@ -31,7 +31,7 @@ int swiState = 0; // 0 = steady state (off/LOW), this is used to make sure we do
 bool btnState[] = {false,false,false,false,false,false,false,false};
 
 //define variables (for BPM and millis)
-int BPM = 80;
+int BPM = 120;
 float timeFactor = 1.00f;
 //int BPMnow = BPM;
 bool stepTriggered = false; //true if a step has been triggered but not yet solved
@@ -409,6 +409,8 @@ void loop() {
       //here it will need to follow the lists provided to know when to start 
       //sequenceStepTimeStart = millis();
       //outputListStep += direction;
+
+      //almost working.. long long long pause on first in forward mode and last in reverse mode!?
       unsigned long TautoRecDuration = 0;
       if (outputListStep + direction > outputListSize || outputListStep + direction < 0 ) { //forward direction - next step is after duration of current step
         TautoRecDuration = autoRecDuration[outputListStep]; 

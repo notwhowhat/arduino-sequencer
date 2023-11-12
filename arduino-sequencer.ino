@@ -77,7 +77,7 @@ void setup() {
 
 // --------------------------------------------
 // ouput
-void outputPins0(){//int currentStep, bool currentStepOn, bool btnState[] ) {
+void outputLeds(){//int currentStep, bool currentStepOn, bool btnState[] ) {
   //ouput given sequence steps
   for (int i = 0; i < 8; i++) {
     if ((currentStep == i && currentStepOn == true) || btnState[i] == true ) {
@@ -260,7 +260,7 @@ void loop() {
           } 
         }
         // show the pressed button (should be just one :) .. what if it isn't :S )
-        outputPins0();
+        outputLeds();
         
         if (outputListStep > 0 ) {  
           //not first time through then check for too many steps, dead space or long hold of 5000ms (5s) 
@@ -412,11 +412,16 @@ void loop() {
 
       //almost working.. long long long pause on first in forward mode and last in reverse mode!?
       unsigned long TautoRecDuration = 0;
-      if (outputListStep + direction > outputListSize || outputListStep + direction < 0 ) { //forward direction - next step is after duration of current step
-        TautoRecDuration = autoRecDuration[outputListStep]; 
-      } 
-      else { TautoRecDuration = abs( autoRecBtnTimeStart[outputListStep + direction] - autoRecBtnTimeStart[outputListStep] ); }
-      sequenceStepTimeNext = sequenceStepTimeStart + 1L * (timeFactor * (TautoRecDuration ) ); 
+      
+      if (outputListStep + direction > outputListSize ) { //forward direction - next step is after duration of current step
+        TautoRecDuration = autoRecBtnTimeStart[1];//autoRecDuration[outputListStep];
+      } else if ( outputListStep + direction < 0 ) { //reverse direction 
+        TautoRecDuration = autoRecBtnTimeStart[outputListStep-1];
+      }
+      else {
+        TautoRecDuration = abs(autoRecBtnTimeStart[outputListStep + direction] - autoRecBtnTimeStart[outputListStep] ); 
+      }
+      sequenceStepTimeNext = sequenceStepTimeStart + (timeFactor * (TautoRecDuration ) ); 
       stepTriggered = true;
       //if (outputListStep+1 < 0) { TautoRecDuration } //reverse direction - next step is duration of last step.
       /*int nxtOutputListStep = outputListStep+1;
@@ -462,5 +467,5 @@ void loop() {
 
   // --------------------------------------------
   // ouput
-  outputPins0();
+  outputLeds();
 }

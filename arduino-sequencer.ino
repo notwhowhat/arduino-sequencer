@@ -364,20 +364,20 @@ void loop() {
             //change BPM by 1 in direction
             if (direction == directionNow) {
               //BPM += 1;
-              if (autoBtnMode == 2) {timeFactor += 1.0F/100; } else {BPM += 1; }
+              if (autoBtnMode == 2) {timeFactor -= 1.0F/100; } else {BPM += 1; }
             } else {
               //BPM -= 1;
-              if (autoBtnMode == 2) {timeFactor -= 1.0F/100; } else {BPM -= 1; }
+              if (autoBtnMode == 2) {timeFactor += 1.0F/100; } else {BPM -= 1; }
             }
             loopTriggerBPM = 1; //this makes it go forward in auto mode .. removed now as was anoying to test.
           } else if (loopTriggerBPM > 0 && swiHoldDuration >= 1000 + (loopTriggerBPM -1 ) * 25 ) {
             //change BPM based on time held ~20 for every 1 second
             if (direction == directionNow) {
               //BPM += 1;
-              if (autoBtnMode == 2) {timeFactor += 1.0F/100; } else {BPM += 1; }
+              if (autoBtnMode == 2) {timeFactor -= 1.0F/100; } else {BPM += 1; }
             } else {
               //BPM -= 1;
-              if (autoBtnMode == 2) {timeFactor -= 1.0F/100; if (timeFactor < 1.0F/100){timeFactor =1.0F/100;}} else {BPM -= 1; }
+              if (autoBtnMode == 2) {timeFactor += 1.0F/100; if (timeFactor < 1.0F/100){timeFactor =1.0F/100;}} else {BPM -= 1; }
             }
             loopTriggerBPM += 1;
           }
@@ -421,7 +421,7 @@ void loop() {
       else {
         TautoRecDuration = abs(autoRecBtnTimeStart[outputListStep + direction] - autoRecBtnTimeStart[outputListStep] ); 
       }
-      sequenceStepTimeNext = sequenceStepTimeStart + (timeFactor * (TautoRecDuration ) ); 
+      sequenceStepTimeNext = sequenceStepTimeStart + (timeFactor * (TautoRecDuration ) );
       stepTriggered = true;
       //if (outputListStep+1 < 0) { TautoRecDuration } //reverse direction - next step is duration of last step.
       /*int nxtOutputListStep = outputListStep+1;

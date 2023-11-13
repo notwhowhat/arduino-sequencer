@@ -411,17 +411,22 @@ void loop() {
       //outputListStep += direction;
 
       //almost working.. long long long pause on first in forward mode and last in reverse mode!?
-      long long TautoRecBtnTimeStart[64]; // this is needed to be long long to get the values to work right below when doing abs
-      for (int i=0;i < outputListSize+1;i++){TautoRecBtnTimeStart[i]  = autoRecBtnTimeStart[i];}
-      long long TautoRecDuration = 0;
+      //long long TautoRecBtnTimeStart[64]; // this is needed to be long long to get the values to work right below when doing abs and keeping memory use lower
+      //for (int i=0;i < outputListSize+1;i++){TautoRecBtnTimeStart[i]  = autoRecBtnTimeStart[i];}
+      unsigned long TautoRecDuration = 0;
       
       if (outputListStep + direction > outputListSize ) { //forward direction - next step is after duration of current step
-        TautoRecDuration = TautoRecBtnTimeStart[1];//autoRecDuration[outputListStep];
+        TautoRecDuration = autoRecBtnTimeStart[1];//autoRecDuration[outputListStep];
       } else if ( outputListStep + direction < 0 ) { //reverse direction 
-        TautoRecDuration = autoRecDuration[outputListStep];
+        TautoRecDuration = autoRecBtnTimeStart[outputListSize] - autoRecBtnTimeStart[outputListSize + direction];
       }
       else {
-        TautoRecDuration = abs(TautoRecBtnTimeStart[outputListStep + direction] - TautoRecBtnTimeStart[outputListStep] ); //abs(autoRecBtnTimeStart[outputListStep + direction] - autoRecBtnTimeStart[outputListStep] ); 
+        if (direction == +1 ){
+          TautoRecDuration = autoRecBtnTimeStart[outputListStep + direction] - autoRecBtnTimeStart[outputListStep]; }//abs(autoRecBtnTimeStart[outputListStep + direction] - autoRecBtnTimeStart[outputListStep] ); 
+        else {
+          TautoRecDuration =  autoRecBtnTimeStart[outputListStep] - autoRecBtnTimeStart[outputListStep + direction]; 
+        }
+        
       }
       sequenceStepTimeNext = sequenceStepTimeStart + (timeFactor * (TautoRecDuration ) );
       stepTriggered = true;

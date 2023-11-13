@@ -328,7 +328,10 @@ void loop() {
     } 
     if (swiState == 1 ) {
       swiHoldDuration = millisNow - swiPressTime;
-      if (zeroActive && (forwardActive || reverseActive)){direction = direction * -1; }
+      if (zeroActive && (forwardActive || reverseActive)){
+        direction = direction * -1; 
+        zeroActive = false;
+      }
       if (swiHoldDuration >= 2000) {
         if (resetActive) {
           autoBtnMode = -1;
@@ -416,14 +419,14 @@ void loop() {
       //for (int i=0;i < outputListSize+1;i++){TautoRecBtnTimeStart[i]  = autoRecBtnTimeStart[i];}
       unsigned long TautoRecDuration = 0;
       
-      if (outputListStep + direction > outputListSize ) { //forward direction - next step is after duration of current step
+      if (outputListStep + direction +1 > outputListSize ) { //forward direction - next step is after duration of current step
         TautoRecDuration = autoRecBtnTimeStart[1];//autoRecDuration[outputListStep];
       } else if ( outputListStep + direction < 0 ) { //reverse direction  
         TautoRecDuration = autoRecBtnTimeStart[outputListSize] - autoRecBtnTimeStart[outputListSize + direction];
       }
       else {
         if (direction == +1 ){
-          TautoRecDuration = autoRecBtnTimeStart[outputListStep + direction] - autoRecBtnTimeStart[outputListStep]; }//abs(autoRecBtnTimeStart[outputListStep + direction] - autoRecBtnTimeStart[outputListStep] ); 
+          TautoRecDuration = autoRecBtnTimeStart[outputListStep +1 + direction] - autoRecBtnTimeStart[outputListStep +1]; }//abs(autoRecBtnTimeStart[outputListStep + direction] - autoRecBtnTimeStart[outputListStep] ); 
         else {
           TautoRecDuration =  autoRecBtnTimeStart[outputListStep] - autoRecBtnTimeStart[outputListStep + direction]; 
         }

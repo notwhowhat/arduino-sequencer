@@ -317,7 +317,6 @@ void loop() {
           
         } else if (forwardActive && !zeroActive) {
           directionNow = 1;
-          //if (zeroActive){direction = direction * -1; }
           if (!autoMode) {stepTriggered=true;}
         } else if (reverseActive && !zeroActive) {
           directionNow = -1;
@@ -339,15 +338,7 @@ void loop() {
             outputList[i] = 0;
           }
           countDown(4, 0.25);  //info flash
-        } /* else if (zeroActive) {
-          //if (autoBtnMode == 0) { autoBtnMode = 1; } 
-          if (autoBtnMode == 1) { autoBtnMode = 2; } 
-          else if (autoBtnMode == 2) { autoBtnMode = 1; }
-          countDown(4, 0.25);  //info flash
-          for (int int i = 0; i < autoBtnMode; i++) {delay(100); countDown(1, 2); }
-          //-----> autoBtnMode startup --> should be a function .. to use in places this is found
-        }
-        */
+        } 
       }
       
 
@@ -411,12 +402,6 @@ void loop() {
       stepTriggered = true;
     } else if (autoBtnMode == 2) { //mode that follows recorded input
       //here it will need to follow the lists provided to know when to start 
-      //sequenceStepTimeStart = millis();
-      //outputListStep += direction;
-
-      //almost working.. long long long pause on first in forward mode and last in reverse mode!?
-      //long long TautoRecBtnTimeStart[64]; // this is needed to be long long to get the values to work right below when doing abs and keeping memory use lower
-      //for (int i=0;i < outputListSize+1;i++){TautoRecBtnTimeStart[i]  = autoRecBtnTimeStart[i];}
       unsigned long TautoRecDuration = 0;
       
       if (outputListStep + direction +1 > outputListSize ) { //forward direction - next step is after duration of current step
@@ -434,19 +419,7 @@ void loop() {
       }
       sequenceStepTimeNext = sequenceStepTimeStart + (timeFactor * (TautoRecDuration ) );
       stepTriggered = true;
-      //if (outputListStep+1 < 0) { TautoRecDuration } //reverse direction - next step is duration of last step.
-      /*int nxtOutputListStep = outputListStep+1;
-      if(nxtOutputListStep > outputList) {nxtOutputListStep = 0; } else if (nxtOutputListStep < 0 ) {nxtOutputListStep = outputListSize;}
-      sequenceStepTimeNext = sequenceStepTimeStart + 1L * (timeFactor * (autoRecBtnTimeStart[nxtOutputListStep] - autoRecBtnTimeStart[outputListStep] ) ); 
-      stepTriggered = true;
-      */
-
     } 
-    /*else { // normal basic autoMode
-      sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;//60/BPM*1000;
-      stepTriggered = true;
-    }
-    */
   }
 
 

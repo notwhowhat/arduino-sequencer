@@ -310,8 +310,8 @@ void loop() {
             else {
               if (autoBtnMode == 1) { autoBtnMode = 2; } 
               else if (autoBtnMode == 2) { autoBtnMode = 1; }
-              countDown(4, 0.25);  //info flash
-              for (int i = 0; i < autoBtnMode; i++) {delay(100); countDown(1, 2); }
+              countDown(1, 0.25);  //info flash
+              //for (int i = 0; i < autoBtnMode; i++) {delay(100); countDown(1, 2); }
             }
           }
           
@@ -411,15 +411,17 @@ void loop() {
       //outputListStep += direction;
 
       //almost working.. long long long pause on first in forward mode and last in reverse mode!?
-      unsigned long TautoRecDuration = 0;
+      long long TautoRecBtnTimeStart[64]; // this is needed to be long long to get the values to work right below when doing abs
+      for (int i=0;i < outputListSize+1;i++){TautoRecBtnTimeStart[i]  = autoRecBtnTimeStart[i];}
+      long long TautoRecDuration = 0;
       
       if (outputListStep + direction > outputListSize ) { //forward direction - next step is after duration of current step
-        TautoRecDuration = autoRecBtnTimeStart[1];//autoRecDuration[outputListStep];
+        TautoRecDuration = TautoRecBtnTimeStart[1];//autoRecDuration[outputListStep];
       } else if ( outputListStep + direction < 0 ) { //reverse direction 
-        TautoRecDuration = autoRecBtnTimeStart[outputListStep-1];
+        TautoRecDuration = autoRecDuration[outputListStep];
       }
       else {
-        TautoRecDuration = abs(autoRecBtnTimeStart[outputListStep + direction] - autoRecBtnTimeStart[outputListStep] ); 
+        TautoRecDuration = abs(TautoRecBtnTimeStart[outputListStep + direction] - TautoRecBtnTimeStart[outputListStep] ); //abs(autoRecBtnTimeStart[outputListStep + direction] - autoRecBtnTimeStart[outputListStep] ); 
       }
       sequenceStepTimeNext = sequenceStepTimeStart + (timeFactor * (TautoRecDuration ) );
       stepTriggered = true;

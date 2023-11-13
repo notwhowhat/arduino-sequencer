@@ -299,7 +299,7 @@ void loop() {
           for (int i = 0; i < 8; i++) {
             digitalWrite(stepPins[i], LOW);
           }
-        } else if (zeroActive) {
+        } else if (zeroActive && (!forwardActive || !reverseActive)) {
           if (!autoMode) {
             for (int i = 0; i < 8; i++) {
               digitalWrite(stepPins[i], LOW);
@@ -315,10 +315,11 @@ void loop() {
             }
           }
           
-        } else if (forwardActive) {
+        } else if (forwardActive && !zeroActive) {
           directionNow = 1;
+          //if (zeroActive){direction = direction * -1; }
           if (!autoMode) {stepTriggered=true;}
-        } else if (reverseActive) {
+        } else if (reverseActive && !zeroActive) {
           directionNow = -1;
           if (!autoMode) {stepTriggered=true;}
         }
@@ -327,7 +328,7 @@ void loop() {
     } 
     if (swiState == 1 ) {
       swiHoldDuration = millisNow - swiPressTime;
-      
+      if (zeroActive && (forwardActive || reverseActive)){direction = direction * -1; }
       if (swiHoldDuration >= 2000) {
         if (resetActive) {
           autoBtnMode = -1;

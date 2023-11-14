@@ -42,7 +42,7 @@ bool tmpDigitalRead = false; // low = false high = true for tmp button
 //autoBtnMode related
 int autoBtnMode = 0; //0 = including buttons/steps that the user presses @BPM, 1 = output record mode order of presses @BPM, 2 = ouput record mode order of presses, holds and spaces
 int outputListStep = 0; // in autoBtnMode 0, 1 or 2 used to track which step we are at for output.
-int outputList[64]; // for recording the notes. 64 steps max len
+int outputList[64]; // for recording the notes. 64 steps max len * 8 for arpeggiator
 int outputListSize = 0; // size of the outputList
 unsigned long autoRecBtnTimeStart[64];
 unsigned long autoRecDuration[64];
@@ -57,6 +57,10 @@ unsigned long swiHoldDuration = 0; // difference for comparision between times, 
 unsigned long btnPressTime[] = {0,0,0,0,0,0,0,0}; //millis when pressed
 unsigned long btnHoldDuration[] = {0,0,0,0,0,0,0,0}; // difference for comparision between times, eg = millis() - swiPressTime;
 
+bool arpegRunOnce = true;
+int arpeggiatorSize = 5;
+int arpegList[] = {-1, 0, 1, 0, 0};
+bool arpeggiator = true;
 
 // --------------------------------------------
 // setup pins for arduino -run 1x
@@ -390,6 +394,30 @@ void loop() {
 
 
   // --------------------------------------------
+  // arepeggiator assimilation
+  // this should fix the ouputlist to give the steps between
+  if (arpeggiator && arpegRunOnce) {
+    int tList[64*8];
+    int outputListSize = 4;
+    int outputList[] = {1,3,5,4};
+    int tListSize = outputListSize;
+    int k=0;
+    
+    outputListSize = 0;
+    for(int i=0; i < tListSize; i++ ){ tList[i] = outputList[i];}
+    for(int i=0; i < tListSize; i++) {
+      for (int j=0; j < arpeggiatorSize; j++) {
+        outputList[k] = tList[i] + arpegList[j];
+        outputListSize++;
+        k++;
+      }
+    }
+    arpegRunOnce = false;
+    autoBtnMode = 1;
+  }
+
+
+  // --------------------------------------------
   // automodes
   //NOTE: below ot integrate?? //-----> autoBtnMode startup --> should be a function .. to use in places this is found
   // ouput assimilation
@@ -398,7 +426,8 @@ void loop() {
     sequenceStepTimeStart = millis();
     if(autoBtnMode <= 1 ) { //modes that follow BPM
       // tofix: this should be in the normal auto mode check aswell as the buttonmode check, but not only this one.
-      sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM;//60/BPM*1000;
+      if (arpeggiator) {sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/(BPM*(arpeggiatorSize + 1)); }//60/BPM*1000;
+      else {sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM; }
       stepTriggered = true;
     } else if (autoBtnMode == 2) { //mode that follows recorded input
       //here it will need to follow the lists provided to know when to start 

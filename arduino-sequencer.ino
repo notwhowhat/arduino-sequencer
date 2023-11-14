@@ -57,10 +57,10 @@ unsigned long swiHoldDuration = 0; // difference for comparision between times, 
 unsigned long btnPressTime[] = {0,0,0,0,0,0,0,0}; //millis when pressed
 unsigned long btnHoldDuration[] = {0,0,0,0,0,0,0,0}; // difference for comparision between times, eg = millis() - swiPressTime;
 
-bool arpegRunOnce = true;
-int arpeggiatorSize = 5;
-int arpegList[] = {-1, 0, 1, 0, 0};
-bool arpeggiator = true;
+bool arpegRunOnce = true; // to setup arpeggiation
+int arpeggiatorSize = 5; // size of list of rpeggiator
+int arpegList[] = {-1, 0, 1, 0, 0}; // list of changes to current step
+bool arpeggiator = true; //true if arpeggiation is turned on
 
 // --------------------------------------------
 // setup pins for arduino -run 1x
@@ -281,6 +281,32 @@ void loop() {
       outputListSize = outputListStep-1;
       outputListStep = 0;
       zeroActive = false;
+
+      // --------------------------------------------
+      // arepeggiator assimilation
+      // this should fix the ouputlist to give the steps between
+      if (arpeggiator && arpegRunOnce ) { // && autoBtnMode == 1
+        int tList[64];
+        //int outputListSize = 4;
+        //int outputList[] = {1,3,5,4};
+        int tListSize = outputListSize;
+        int k=0;
+        
+        outputListSize = 0;
+        for(int i=0; i < tListSize; i++ ){ tList[i] = outputList[i];}
+        for(int i=0; i < tListSize; i++) {
+          for (int j=0; j < arpeggiatorSize; j++) {
+            outputList[k] = tList[i] + arpegList[j];
+            outputListSize++;
+            k++;
+          }
+        }
+        //arpegRunOnce = false;
+        //autoBtnMode = 1;
+      }
+
+
+
       //-----> autoBtnMode startup --> should be a function .. to use in places this is found
       //vvvv function basics?? including different options found in output management
       millisNow = millis(); 
@@ -393,28 +419,7 @@ void loop() {
   }
 
 
-  // --------------------------------------------
-  // arepeggiator assimilation
-  // this should fix the ouputlist to give the steps between
-  if (arpeggiator && arpegRunOnce) {
-    int tList[64*8];
-    int outputListSize = 4;
-    int outputList[] = {1,3,5,4};
-    int tListSize = outputListSize;
-    int k=0;
-    
-    outputListSize = 0;
-    for(int i=0; i < tListSize; i++ ){ tList[i] = outputList[i];}
-    for(int i=0; i < tListSize; i++) {
-      for (int j=0; j < arpeggiatorSize; j++) {
-        outputList[k] = tList[i] + arpegList[j];
-        outputListSize++;
-        k++;
-      }
-    }
-    arpegRunOnce = false;
-    autoBtnMode = 1;
-  }
+  
 
 
   // --------------------------------------------
@@ -426,7 +431,7 @@ void loop() {
     sequenceStepTimeStart = millis();
     if(autoBtnMode <= 1 ) { //modes that follow BPM
       // tofix: this should be in the normal auto mode check aswell as the buttonmode check, but not only this one.
-      if (arpeggiator) {sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/(BPM*(arpeggiatorSize + 1)); }//60/BPM*1000;
+      if (arpeggiator) {sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/(BPM*(arpeggiatorSize)); }//60/BPM*1000;
       else {sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM; }
       stepTriggered = true;
     } else if (autoBtnMode == 2) { //mode that follows recorded input

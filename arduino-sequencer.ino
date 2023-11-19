@@ -42,8 +42,8 @@ bool tmpDigitalRead = false; // low = false high = true for tmp button
 //autoBtnMode related
 int autoBtnMode = 0; //0 = including buttons/steps that the user presses @BPM, 1 = output record mode order of presses @BPM, 2 = ouput record mode order of presses, holds and spaces
 int outputListStep = 0; // in autoBtnMode 0, 1 or 2 used to track which step we are at for output.
-int outputList[64]; // for recording the notes. 64 steps max len * 8 for arpeggiator
 int outputListSize = 0; // size of the outputList
+int outputList[64]; // for recording the notes. 64 steps max len * 8 for arpeggiator
 unsigned long autoRecBtnTimeStart[64];
 unsigned long autoRecDuration[64];
 
@@ -60,7 +60,9 @@ unsigned long btnHoldDuration[] = {0,0,0,0,0,0,0,0}; // difference for comparisi
 bool arpegRunOnce = true; // to setup arpeggiation
 int arpeggiatorSize = 5; // size of list of rpeggiator
 int arpegList[] = {-1, 0, 1, 0, 0}; // list of changes to current step
-bool arpeggiator = true; //true if arpeggiation is turned on
+unsigned long AautoRecBtnTimeStart[64];
+unsigned long AautoRecDuration[64];
+bool arpeggiator = false;//true; //true if arpeggiation is turned on
 
 // --------------------------------------------
 // setup pins for arduino -run 1x
@@ -227,6 +229,12 @@ void loop() {
       unsigned long millisStart = millis();
       currentStep = -1;
       bool whileCntrl = true; //check for while
+
+      // temp values of recording before deciding if it is for arpeggiatior or steps
+      //int outputListSize = 0; // size of the outputList
+      int ToutputList[64]; // for recording the notes. 64 steps max len
+      unsigned long TautoRecBtnTimeStart[64];
+      unsigned long TautoRecDuration[64];
       do {
         millisNow = millis(); 
         zeroActive = digitalRead(zeroSwiPin);
@@ -244,17 +252,17 @@ void loop() {
             // opposite of last check, so the note has just finnished
             // outputListStep gets changed every time a note has finnished, and is saved for the order
             // of the sequence
-            if (millisNow - (autoRecBtnTimeStart[outputListStep] + autoRecDuration[outputListStep] ) > 25 ){ //debounce level
+            if (millisNow - (TautoRecBtnTimeStart[outputListStep] + TautoRecDuration[outputListStep] ) > 25 ){ //debounce level
               
-              outputList[outputListStep] = k;
+              ToutputList[outputListStep] = k;
 
               // subtracted by millisStart, for to get relative time values
-              autoRecBtnTimeStart[outputListStep] = btnPressTime[k] - millisStart; // normalized to the start of the recording
-              autoRecDuration[outputListStep] = millisNow - autoRecBtnTimeStart[outputListStep]; // duration of press
+              TautoRecBtnTimeStart[outputListStep] = btnPressTime[k] - millisStart; // normalized to the start of the recording
+              TautoRecDuration[outputListStep] = millisNow - TautoRecBtnTimeStart[outputListStep]; // duration of press
 
               outputListStep++;
-              autoRecBtnTimeStart[outputListStep] = 0; //resets state to make sure it is zero
-              autoRecDuration[outputListStep] = 0; //resets state to make sure it is zero
+              TautoRecBtnTimeStart[outputListStep] = 0; //resets state to make sure it is zero
+              TautoRecDuration[outputListStep] = 0; //resets state to make sure it is zero
 
               btnState[k] = false;
             }
@@ -269,7 +277,7 @@ void loop() {
         if (outputListStep > 0 ) {  
           //not first time through then check for too many steps, dead space or long hold of 5000ms (5s) 
           
-          if (outputListStep >= 64 || millisNow - (autoRecBtnTimeStart[outputListStep-1] + autoRecDuration[outputListStep-1] ) > 5000 || autoRecDuration[outputListStep] > 5000 || zeroActive ) {
+          if (outputListStep >= 64 || millisNow - (TautoRecBtnTimeStart[outputListStep-1] + TautoRecDuration[outputListStep-1] ) > 5000 || AautoRecDuration[outputListStep] > 5000 || zeroActive ) {
             whileCntrl = false;
           }
            
@@ -278,13 +286,29 @@ void loop() {
       } while (whileCntrl ) ; // set to check if last note was 5 seconds long, if so done!
       
       countDown(4, 0.25);  //info flash
-      outputListSize = outputListStep-1;
+
+      if (autoMode) {
+        for (int i=0; i < 64; i++) {
+          outputList[i] = ToutputList[i];
+          autoRecBtnTimeStart[i] = TautoRecBtnTimeStart[i];
+          autoRecDuration[i] = TautoRecDuration[i];
+        }
+        outputListSize = outputListStep-1;
+      } else { //arpeggiator recording!!
+        for (int i=0; i < 64; i++) {
+          arpegList[i] = ToutputList[i];
+          AautoRecBtnTimeStart[i] = TautoRecBtnTimeStart[i];
+          AautoRecDuration[i] = TautoRecDuration[i];
+        }
+        arpeggiatorSize = outputListStep-1;
+        arpeggiator = true;
+      }
       outputListStep = 0;
       zeroActive = false;
 
       // --------------------------------------------
       // arepeggiator assimilation
-      // this should fix the ouputlist to give the steps between
+      // this should fix the ouputlist to give the steps between including all the arepeggiator steps
       if (arpeggiator && arpegRunOnce ) { // && autoBtnMode == 1
         int tList[64];
         //int outputListSize = 4;
@@ -364,6 +388,7 @@ void loop() {
       if (swiHoldDuration >= 2000) {
         if (resetActive) {
           autoBtnMode = -1;
+          arpegRunOnce = false;
           for (int i = 0; i < 64; i++) {
             outputList[i] = 0;
           }

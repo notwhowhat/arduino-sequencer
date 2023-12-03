@@ -10,6 +10,10 @@ complete new code with millis-ification to allow for some spify autoMode sequenc
 see README.md for loads of info instructions and todo
 https://github.com/notwhowhat/arduino-sequencer/blob/4ee584a79ed4d488f3fb350778e013a050389698/README.md
 -------------------------------------------- */
+/* BUG: bugs to squash 
+BUG: arpeggiator does not start without zero
+BUG: arp reset needs to be considered better
+*/
 int forwardSwiPin = 8; //sets direction forward
 int reverseSwiPin = 0; //sets direction reverse
 int resetSwiPin = 18; //resets unit sequence state at -1 (not visible)
@@ -46,6 +50,8 @@ int outputListSize = 0; // size of the outputList
 int outputList[64]; // for recording the notes. 64 steps max len * 8 for arpeggiator
 unsigned long autoRecBtnTimeStart[64];
 unsigned long autoRecDuration[64];
+int autoOutputList[64]; // output list auto - used to save it in conjunction with arpeggiator mode.
+int autoOutputListSize; // ouput list size to save it independently if needed for arpeggiator mode.
 
 //millis related
 unsigned long millisNow = millis();
@@ -58,10 +64,11 @@ unsigned long btnPressTime[] = {0,0,0,0,0,0,0,0}; //millis when pressed
 unsigned long btnHoldDuration[] = {0,0,0,0,0,0,0,0}; // difference for comparision between times, eg = millis() - swiPressTime;
 
 bool arpegRunOnce = true; // to setup arpeggiation
-int arpeggiatorSize = 5; // size of list of rpeggiator
+int arpeggiatorSize = 5; // size of list of arpeggiator
 int arpegList[] = {-1, 0, 1, 0, 0}; // list of changes to current step
-unsigned long AautoRecBtnTimeStart[64];
-unsigned long AautoRecDuration[64];
+int arpegRecordingRoot = 4; //when recording this is the root of the arpeggiation that is then recorded relative to this point.
+unsigned long arpegAutoRecBtnTimeStart[64];
+unsigned long arpegAutoRecDuration[64];
 bool arpeggiator = false;//true; //true if arpeggiation is turned on
 
 // --------------------------------------------
@@ -277,7 +284,7 @@ void loop() {
         if (outputListStep > 0 ) {  
           //not first time through then check for too many steps, dead space or long hold of 5000ms (5s) 
           
-          if (outputListStep >= 64 || millisNow - (TautoRecBtnTimeStart[outputListStep-1] + TautoRecDuration[outputListStep-1] ) > 5000 || AautoRecDuration[outputListStep] > 5000 || zeroActive ) {
+          if (outputListStep >= 64 || millisNow - (TautoRecBtnTimeStart[outputListStep-1] + TautoRecDuration[outputListStep-1] ) > 5000 || arpegAutoRecDuration[outputListStep] > 5000 || zeroActive ) {
             whileCntrl = false;
           }
            
@@ -289,16 +296,16 @@ void loop() {
 
       if (autoMode) {
         for (int i=0; i < 64; i++) {
-          outputList[i] = ToutputList[i];
+          outputList[i] = autoOutputList[i]  = ToutputList[i];
           autoRecBtnTimeStart[i] = TautoRecBtnTimeStart[i];
           autoRecDuration[i] = TautoRecDuration[i];
         }
-        outputListSize = outputListStep-1;
+        outputListSize = autoOutputListSize = outputListStep-1;
       } else { //arpeggiator recording!!
         for (int i=0; i < 64; i++) {
-          arpegList[i] = ToutputList[i];
-          AautoRecBtnTimeStart[i] = TautoRecBtnTimeStart[i];
-          AautoRecDuration[i] = TautoRecDuration[i];
+          arpegList[i] = ToutputList[i] - arpegRecordingRoot;
+          arpegAutoRecBtnTimeStart[i] = TautoRecBtnTimeStart[i];
+          arpegAutoRecDuration[i] = TautoRecDuration[i];
         }
         arpeggiatorSize = outputListStep-1;
         arpeggiator = true;
@@ -387,11 +394,27 @@ void loop() {
       }
       if (swiHoldDuration >= 2000) {
         if (resetActive) {
-          autoBtnMode = -1;
-          arpegRunOnce = false;
-          for (int i = 0; i < 64; i++) {
+          if (autoMode) { // autoMode is reset and apreggiator is removed if it is active
+            autoBtnMode = -1;
+            for (int i = 0; i < 64; i++) {
+              outputList[i] = 0;
+            }
+            // TODO: - then it has to be setup so automode is removed from output while arpeggiator is saved
+            
+          }
+          else { // !autoMode = arpeggiator is reset
+            arpegRunOnce = false;
+            for (int i = 0; i < 64; i++) {
+              outputList[i] = autoOutputList[i] = 0;
+            }
+            // TODO: - then it has to be done so arpeggiator is removed from the normal sequence whatever that is.
+          }   
+          
+          
+          /*for (int i = 0; i < 64; i++) {
             outputList[i] = 0;
           }
+          */
           countDown(4, 0.25);  //info flash
         } 
       }

@@ -63,13 +63,14 @@ unsigned long swiHoldDuration = 0; // difference for comparision between times, 
 unsigned long btnPressTime[] = {0,0,0,0,0,0,0,0}; //millis when pressed
 unsigned long btnHoldDuration[] = {0,0,0,0,0,0,0,0}; // difference for comparision between times, eg = millis() - swiPressTime;
 
-bool arpegRunOnce = true; // to setup arpeggiation
+//bool arpegRecord = true; // to setup arpeggiation
 int arpeggiatorSize = 5; // size of list of arpeggiator
 int arpegList[] = {-1, 0, 1, 0, 0}; // list of changes to current step
 int arpegRecordingRoot = 4; //when recording this is the root of the arpeggiation that is then recorded relative to this point.
 unsigned long arpegAutoRecBtnTimeStart[64];
 unsigned long arpegAutoRecDuration[64];
 bool arpeggiator = false;//true; //true if arpeggiation is turned on
+int arpeggiatorStep = 0;//step currently on arpeggiation, this steps through and is reset on each primary sequence step.
 
 // --------------------------------------------
 // setup pins for arduino -run 1x
@@ -220,7 +221,7 @@ void loop() {
     // the countdown has sucessfully been finnished
     // next: time to record
     // this needs to have all elements of the buttons but also only gets to be run once
-    else if (btnsPressed == 1 ) {
+    else if (btnsPressed == 1 ) { //if in automode then it will record the primary sequence, otherwise !automode it will be record for the arpeggiator!
       if (autoBtnMode != 2 ) {
         autoBtnMode = 1;
       } else {autoBtnMode = 2; }
@@ -309,14 +310,16 @@ void loop() {
         }
         arpeggiatorSize = outputListStep-1;
         arpeggiator = true;
+        //arpegRecord = true;
       }
       outputListStep = 0;
       zeroActive = false;
 
+      /*
       // --------------------------------------------
       // arepeggiator assimilation
       // this should fix the ouputlist to give the steps between including all the arepeggiator steps
-      if (arpeggiator && arpegRunOnce ) { // && autoBtnMode == 1
+      if (arpeggiator && arpegRecord ) { // && autoBtnMode == 1
         int tList[64];
         //int outputListSize = 4;
         //int outputList[] = {1,3,5,4};
@@ -332,12 +335,11 @@ void loop() {
             k++;
           }
         }
-        //arpegRunOnce = false;
+        arpegRecord = false;
         //autoBtnMode = 1;
       }
-
-
-
+      */
+      
       //-----> autoBtnMode startup --> should be a function .. to use in places this is found
       //vvvv function basics?? including different options found in output management
       millisNow = millis(); 
@@ -403,7 +405,9 @@ void loop() {
             
           }
           else { // !autoMode = arpeggiator is reset
-            arpegRunOnce = false;
+            arpeggiator = false;
+            arpeggiatorStep = 0;
+            //arpegRecord = false;
             for (int i = 0; i < 64; i++) {
               outputList[i] = autoOutputList[i] = 0;
             }
@@ -479,9 +483,21 @@ void loop() {
     sequenceStepTimeStart = millis();
     if(autoBtnMode <= 1 ) { //modes that follow BPM
       // tofix: this should be in the normal auto mode check aswell as the buttonmode check, but not only this one.
-      if (arpeggiator) {sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/(BPM*(arpeggiatorSize)); }//60/BPM*1000;
-      else {sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM; }
-      stepTriggered = true;
+      if (arpeggiator) {
+        sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/(BPM*(arpeggiatorSize));
+        if (arpeggiatorStep = arpeggiatorSize) {
+          arpeggiatorStep=0;
+          stepTriggered = true;
+        }
+        else {
+          arpeggiatorStep++;
+        }
+      }//60/BPM*1000;
+      else {
+        sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/BPM; 
+        stepTriggered = true;
+      }
+      
     } else if (autoBtnMode == 2) { //mode that follows recorded input
       //here it will need to follow the lists provided to know when to start 
       unsigned long TautoRecDuration = 0;

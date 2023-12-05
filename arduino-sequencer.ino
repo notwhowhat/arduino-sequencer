@@ -289,9 +289,9 @@ void loop() {
             whileCntrl = false;
           }
            
-        } else { whileCntrl = true; }
+        } else {whileCntrl = true; }
 
-      } while (whileCntrl ) ; // set to check if last note was 5 seconds long, if so done!
+      } while (whileCntrl); // set to check if last note was 5 seconds long, if so done!
       
       countDown(4, 0.25);  //info flash
 
@@ -302,7 +302,7 @@ void loop() {
           autoRecDuration[i] = TautoRecDuration[i];
         }
         outputListSize = autoOutputListSize = outputListStep-1;
-      } else { //arpeggiator recording!!
+      } else { //arpeggiator recording in !autoMode!!
         for (int i=0; i < 64; i++) {
           arpegList[i] = ToutputList[i] - arpegRecordingRoot;
           arpegAutoRecBtnTimeStart[i] = TautoRecBtnTimeStart[i];
@@ -351,6 +351,7 @@ void loop() {
 
   // --------------------------------------------
   // switch processing 
+  // determining what all the different combinations of time and switches do within different modes.
   millisNow = millis();
   if (resetActive || zeroActive || forwardActive || reverseActive ) {
     if (swiState == 0 ) {
@@ -484,7 +485,7 @@ void loop() {
     if(autoBtnMode <= 1 ) { //modes that follow BPM
       // tofix: this should be in the normal auto mode check aswell as the buttonmode check, but not only this one.
       if (arpeggiator) {
-        sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/(BPM*(arpeggiatorSize));
+        sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/(BPM*(arpeggiatorSize/(arpeggiatorStep+1)));
         if (arpeggiatorStep = arpeggiatorSize) {
           arpeggiatorStep=0;
           stepTriggered = true;
@@ -528,6 +529,7 @@ void loop() {
     //digitalWrite(stepPins[currentStep], LOW);
     //to fix so it uses ouputList[] && 7 = outputListStep
     stepTriggered = false;
+    
     if (autoBtnMode >= 0 && outputListSize != 0) { //autoMode && 
       outputListStep += direction;
       if (outputListStep > outputListSize ) {
@@ -535,8 +537,15 @@ void loop() {
       } else if (outputListStep < 0 ) {
         outputListStep = outputListSize;
       }
-      currentStep = outputList[outputListStep];
-    } else {
+      if (arpeggiator) {
+        //to do so it fixes arpeggiator output > 7 then 7, < 0 then 0
+        currentStep = outputList[outputListStep+arpegList[arpeggiatorStep]];
+        if (currentStep > 7) { currentStep = 7;}
+        else if (currentStep < 0 ) {currentStep = 0; }
+      } else {
+        currentStep = outputList[outputListStep];
+      }
+    } else { // == autoBtnMode = 0
       currentStep += direction;
       if (currentStep > 7 ) {
         currentStep = 0;

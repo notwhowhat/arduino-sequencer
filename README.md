@@ -37,4 +37,8 @@ while very base functionality is accessible directly via signals in /out there a
 - [x] ? - alternate way of entering autoBtnMode 1/2 quickly - maybe by pressing a button and hitting zero switch? - 231106! yes, exactly this!!
 - [x] ? - adjust speed of autoBtnMode 2 (recording with spaces) with forward and reverse - see timingAdjust_autoBtnStep2 branch - 231110ish!
 
+## proposed versioning
+alpha as it is only tested on our unit - if someone else loads the software and we get reports it works then we will move it to beta,
+beta versions 1-4 after each additional user has loaded it and finds it functional 
+production when we have >=5 units reported working
 eof

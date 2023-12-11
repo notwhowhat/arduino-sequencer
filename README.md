@@ -23,11 +23,16 @@ while very base functionality is accessible directly via signals in /out there a
 -  autoBtnMode 1 - proceeds through sequence recorded according to BPM (default when single button pressing), pressing a button impacts the sequence
 -  autoBtnMode 2 - proceeds through sequence recorded according to when buttons were pressed in time, pressing a button impacts the sequence
 
+## external clock
+input from external clock into forward or reverse initiaiates the automode and it follows along so one can input the signal! this is considered a feature at this time and not a bug.
+
 ## electonics notes
   serial interface - used to program the unit and is connected with button facing you and the mini usb down the dupont connectors with metal up are inserted to the main connector from left to right ground(black)-space-power(red)-yellow-orange-white. 
   serial interface switch - connected according to the colors yellow to yellow, white to white and orange to orange.
 
 ## TODO
+- [ ] ? - fix bug with reversing direction in automode -- cool down period? so it doesn't double reverse :S
+- [ ] ? - extended testing with more external clocks and other VCOs
 - [ ] ? - fix autoBtnMode 2 to include dead space between recorded presses - autoBtnMode 3??
 - [ ] ? - arpeggiator mode - concept : a single fwd/rev signal will arpeggiate on different settings according to auotBtnMode set wether 0,1 or 2 but just done much faster? how to activate??
 - [ ] ? - +/-12v input test .. design of ours is an atmega328p - today it is running directly off of 5v source voltage via USB red(power) and black(ground) (NOT coming from ardunio with a space between) should allow for 6-15v function but this is not tested o_O.

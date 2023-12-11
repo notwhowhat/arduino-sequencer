@@ -64,9 +64,9 @@ unsigned long btnPressTime[] = {0,0,0,0,0,0,0,0}; //millis when pressed
 unsigned long btnHoldDuration[] = {0,0,0,0,0,0,0,0}; // difference for comparision between times, eg = millis() - swiPressTime;
 
 //bool arpegRecord = true; // to setup arpeggiation
-int arpeggiatorSize = 5; // size of list of arpeggiator
-int arpegList[] = {-1, 0, 1, 0, 0}; // list of changes to current step
-int arpegRecordingRoot = 4; //when recording this is the root of the arpeggiation that is then recorded relative to this point.
+int arpegListSize = 0; // size of list of arpeggiator
+int arpegList[10];// = {-1, 0, 1, 0, 0}; // list of changes to current step
+int arpegRecordingRoot = 4-1; //when recording this is the root of the arpeggiation that is then recorded relative to this point. 0 is first step so, 4 -1 is the 4th step
 unsigned long arpegAutoRecBtnTimeStart[64];
 unsigned long arpegAutoRecDuration[64];
 bool arpeggiator = false;//true; //true if arpeggiation is turned on
@@ -294,7 +294,7 @@ void loop() {
       } while (whileCntrl); // set to check if last note was 5 seconds long, if so done!
       
       countDown(4, 0.25);  //info flash
-
+      
       if (autoMode) {
         for (int i=0; i < 64; i++) {
           outputList[i] = autoOutputList[i]  = ToutputList[i];
@@ -303,14 +303,31 @@ void loop() {
         }
         outputListSize = autoOutputListSize = outputListStep-1;
       } else { //arpeggiator recording in !autoMode!!
+        //BUG: there is an issue here .. something is breaking in this else loop causing an all out failure of the arpeg. eg countDown usnig areptListSize crashes :(
+        //delay(1000);
+        //countDown(outputListStep-1, 1); 
         for (int i=0; i < 64; i++) {
           arpegList[i] = ToutputList[i] - arpegRecordingRoot;
           arpegAutoRecBtnTimeStart[i] = TautoRecBtnTimeStart[i];
           arpegAutoRecDuration[i] = TautoRecDuration[i];
         }
-        arpeggiatorSize = outputListStep-1;
+        arpegListSize = outputListStep-1;
         arpeggiator = true;
         //arpegRecord = true;
+        int tmpCurrentStep = currentStep;
+        //currentStep = 4;
+        delay(1000);
+        //countDown(outputListStep-1, 1); 
+        //delay(1000);
+        countDown(arpegListSize,1); //BUG: this is causing it to flash on the first 4 steps!
+        delay(1000);
+        for (int i=0; i < arpegListSize; i++) {
+          delay(500);
+          currentStep = arpegRecordingRoot + arpegList[i];
+          outputLeds();
+        }
+        
+        //currentStep = tmpCurrentStep;
       }
       outputListStep = 0;
       zeroActive = false;
@@ -329,7 +346,7 @@ void loop() {
         outputListSize = 0;
         for(int i=0; i < tListSize; i++ ){ tList[i] = outputList[i];}
         for(int i=0; i < tListSize; i++) {
-          for (int j=0; j < arpeggiatorSize; j++) {
+          for (int j=0; j < arpegListSize; j++) {
             outputList[k] = tList[i] + arpegList[j];
             outputListSize++;
             k++;
@@ -409,9 +426,10 @@ void loop() {
             arpeggiator = false;
             arpeggiatorStep = 0;
             //arpegRecord = false;
-            for (int i = 0; i < 64; i++) {
+            /*for (int i = 0; i < 64; i++) {
               outputList[i] = autoOutputList[i] = 0;
             }
+            */
             // TODO: - then it has to be done so arpeggiator is removed from the normal sequence whatever that is.
           }   
           
@@ -485,8 +503,8 @@ void loop() {
     if(autoBtnMode <= 1 ) { //modes that follow BPM
       // tofix: this should be in the normal auto mode check aswell as the buttonmode check, but not only this one.
       if (arpeggiator) {
-        sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/(BPM*(arpeggiatorSize/(arpeggiatorStep+1)));
-        if (arpeggiatorStep = arpeggiatorSize) {
+        sequenceStepTimeNext = sequenceStepTimeStart + (60L*1000)/(BPM*(arpegListSize));
+        if (arpeggiatorStep = arpegListSize) {
           arpeggiatorStep=0;
           stepTriggered = true;
         }
@@ -525,7 +543,12 @@ void loop() {
   // --------------------------------------------
   // triggered step processing
   //find next step if triggered via forward or reverse or via auotmode
-  if (stepTriggered == true) {
+  if (arpeggiator && !stepTriggered ) {
+    //to do so it fixes arpeggiator output > 7 then 7, < 0 then 0
+    currentStep = outputList[outputListStep+arpegList[arpeggiatorStep]];
+    if (currentStep > 7) { currentStep = 7;}
+    else if (currentStep < 0 ) {currentStep = 0; }
+  } else if (stepTriggered == true) {
     //digitalWrite(stepPins[currentStep], LOW);
     //to fix so it uses ouputList[] && 7 = outputListStep
     stepTriggered = false;
@@ -537,14 +560,7 @@ void loop() {
       } else if (outputListStep < 0 ) {
         outputListStep = outputListSize;
       }
-      if (arpeggiator) {
-        //to do so it fixes arpeggiator output > 7 then 7, < 0 then 0
-        currentStep = outputList[outputListStep+arpegList[arpeggiatorStep]];
-        if (currentStep > 7) { currentStep = 7;}
-        else if (currentStep < 0 ) {currentStep = 0; }
-      } else {
-        currentStep = outputList[outputListStep];
-      }
+      currentStep = outputList[outputListStep];
     } else { // == autoBtnMode = 0
       currentStep += direction;
       if (currentStep > 7 ) {

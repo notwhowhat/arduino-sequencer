@@ -28,13 +28,13 @@ while very base functionality is accessible directly via signals in /out there a
   serial interface switch - connected according to the colors yellow to yellow, white to white and orange to orange.
 
 ## TODO
-- [ ] ? - adjust speed of autoBtnMode 2 (recording with spaces) with forward and reverse - see timingAdjust_autoBtnStep2 branch
 - [ ] ? - fix autoBtnMode 2 to include dead space between recorded presses - autoBtnMode 3??
 - [ ] ? - arpeggiator mode - concept : a single fwd/rev signal will arpeggiate on different settings according to auotBtnMode set wether 0,1 or 2 but just done much faster? how to activate??
-- [ ] ? - +/-12v input test .. today running directly off of 5v source voltage via USB red(power) and black(ground) (NOT coming from ardunio with a space between) should allow for 6-15v function.
+- [ ] ? - +/-12v input test .. design of ours is an atmega328p - today it is running directly off of 5v source voltage via USB red(power) and black(ground) (NOT coming from ardunio with a space between) should allow for 6-15v function but this is not tested o_O.
 - [x] ? - organize variables a bit better -231106! :)
 - [x] ? - improve comments - 231106! a good next step, including headings where necessary
 - [x] ? - remove dead code - 231106! :)
 - [x] ? - alternate way of entering autoBtnMode 1/2 quickly - maybe by pressing a button and hitting zero switch? - 231106! yes, exactly this!!
+- [x] ? - adjust speed of autoBtnMode 2 (recording with spaces) with forward and reverse - see timingAdjust_autoBtnStep2 branch - 231110ish!
 
 eof

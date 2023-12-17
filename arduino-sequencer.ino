@@ -334,9 +334,11 @@ void loop() {
       if (swiHoldDuration >= 2000) {
         if (resetActive) {
           autoBtnMode = -1;
-          for (int i = 0; i < 64; i++) {
+          int outputList[64]; 
+          /*for (int i = 0; i < 64; i++) {
             outputList[i] = 0;
           }
+          */
           countDown(4, 0.25);  //info flash
         } 
       }
